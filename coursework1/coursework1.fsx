@@ -87,7 +87,7 @@ let atMostHalf (n: int) = n / 2
 //   float : int -> float
 
 let avgAndEq (i1: int, i2: int, i3: int) =
-    let average = float (i1 + i2 + i3) / float (3)
+    let average = float (i1 + i2 + i3) / 3.0
     let values = (i1 = i2, i2 = i3, i3 = i1)
     (average, values)
 
@@ -187,9 +187,9 @@ let rec notFibonacci n =
     | 0 -> (2, 1)
     | 1 -> (1, 1)
     | _ ->
-        (fst (notFibonacci (n - 2))
-         + fst (notFibonacci (n - 1)),
-         2)
+        let x = notFibonacci (n - 2)
+        let y = notFibonacci (n - 1)
+        (fst (x) + fst (y), 1 + snd (x) + snd (y))
 
 
 // 7. Define the functions
