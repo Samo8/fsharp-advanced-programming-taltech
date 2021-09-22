@@ -231,17 +231,17 @@ let rec notFibonacci n =
 // You can compare your approximations with results from
 // `System.Math.Sin` and `System.Math.Cos`.
 
-// let rec sinApprox (d: int) (x: float) =
-//     if d = 0 then
-//         x
-//     else
-//         2.0
-//         * (sinApprox (d - 1) (x / 2.0))
-//         * (cosApprox (d - 1) (x / 2.0))
+let rec sinApprox (d: int) (x: float) =
+    if d = 0 then
+        x
+    else
+        2.0
+        * (sinApprox (d - 1) (x / 2.0))
+        * (cosApprox (d - 1) (x / 2.0))
 
-// and cosApprox (d: int) (x: float) =
-//     if d = 0 then
-//         1.0
-//     else
-//         ((cosApprox (d - 1) (x / 2.0)) ** 2.0)
-//         - ((sinApprox (d - 1) (x / 2.0)) ** 2.0)
+and cosApprox (d: int) (x: float) =
+    if d = 0 then
+        1.0
+    else
+        ((cosApprox (d - 1) (x / 2.0)) ** 2.0)
+        - ((sinApprox (d - 1) (x / 2.0)) ** 2.0)
