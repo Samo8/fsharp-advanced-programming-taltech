@@ -34,7 +34,7 @@
 // string list * string * (int * int) * int
 // The meaning of the tuple elements is as follows:
 // * The first field represents the list of author names where each name is in the format
-//   "Lastname, Firstname1 Firstname2" (i.e. listing all first names after comma)
+// * "Lastname, Firstname1 Firstname2" (i.e. listing all first names after comma)
 // * The second field represents the title of the publication
 // * The third field represents a pair containing the starting page number and ending page number of the paper.
 // * The fourth field represents the year of publication
@@ -123,7 +123,7 @@ let rec compareLists (a: string list) (b: string list) : int =
 
 let getAuthorsFromBibliographyItem (a: string list, _: string, _: (int * int), _: int) = a
 let getYearFromBibliographyItem (_: string list, _: string, _: (int * int), d: int) = d
-let getNumPagesFtomBibliographyItem (_: string list, _: string, c: (int * int), _: int) = c
+let getNumPagesFromBibliographyItem (_: string list, _: string, c: (int * int), _: int) = c
 
 
 // let aa =
@@ -148,6 +148,11 @@ let compareAuthors (a: BibliographyItem) (b: BibliographyItem) : int =
 // that takes two instances of bibliography items and compares them according to the authors and if the authors are
 // the same then according to the number of pages in the publication.
 
+let sumPages (pageFrom, pageTo) = pageTo - pageFrom
+
+let getSummedPages =
+    getNumPagesFromBibliographyItem >> sumPages
+
 let compareAuthorsNumPages (a: BibliographyItem) (b: BibliographyItem) : int =
     let comp =
         compareLists (getAuthorsFromBibliographyItem a) (getAuthorsFromBibliographyItem b)
@@ -155,9 +160,7 @@ let compareAuthorsNumPages (a: BibliographyItem) (b: BibliographyItem) : int =
     if comp <> 0 then
         comp
     else
-        let numPagesA = getNumPagesFtomBibliographyItem a
-        let numPagesB = getNumPagesFtomBibliographyItem b
-        compare (snd numPagesA - fst numPagesA) (snd numPagesB - fst numPagesB)
+        compare (getSummedPages a) (getSummedPages b)
 
 
 // 5. Make a function
@@ -166,21 +169,46 @@ let compareAuthorsNumPages (a: BibliographyItem) (b: BibliographyItem) : int =
 // publication in ascending order.
 // If two items are at the same level in the sort order, their order should be preserved.
 
-let sortBibliographyByAuthorNumPages (list: BibliographyItem list) =
-    List.sortBy
-        (fun (x: BibliographyItem) ->
-            let numPages = getNumPagesFtomBibliographyItem x
-            snd numPages - fst numPages)
 
-sortBibliographyByAuthorNumPages bibliographyData
+let sortBibliographyByNumPages (list: BibliographyItem list) = list |> Seq.sortBy (getSummedPages)
+
+// List.sortBy
+//     (fun (item: BibliographyItem) ->
+//         let (pageFrom, pageTo) = getNumPagesFtomBibliographyItem item
+//         pageTo - pageFrom)
+
+sortBibliographyByNumPages bibliographyData
+
 
 // 6. Make a function
 // sortBibliographyByAuthorNumPages : BibliographyItem list -> BibliographyItem list
 // That returns a bibliography sorted according to the authors and number of pages in the publication in ascending order
 // If two items are at the same level in the sort order, their order should be preserved.
 
+let sortBibliographyByAuthorNumPages (list: BibliographyItem list) =
+    list
+    |> Seq.sortBy (fun item -> getAuthorsFromBibliographyItem item, getSummedPages item)
+// list
+// |> Seq.sortBy (getAuthorsFromBibliographyItem)
+// |> Seq.sortBy (getNumPagesFtomBibliographyItem >> sumPages)
+
+
+
+let getAuthorsPublications (list: BibliographyItem list) (name: string) =
+    list
+    |> List.filter (fun item -> List.contains name (getAuthorsFromBibliographyItem item))
 
 // 7. Make a function
 // groupByAuthor : BibliographyItem list -> (string * BibliographyItem list) list
 // where the return list contains pairs where the first element is the name of a single
 // author and the second element a list of bibliography items that the author has co-authored.
+
+let groupByAuthor (list: BibliographyItem list) =
+    list
+    |> List.collect (getAuthorsFromBibliographyItem)
+    |> List.map (fun name -> (name, getAuthorsPublications list name))
+    |> List.distinct
+
+
+// let x = groupByAuthor bibliographyData
+// printfn "%A" (x.Head)
