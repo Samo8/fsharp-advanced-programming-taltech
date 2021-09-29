@@ -210,5 +210,6 @@ let groupByAuthor (list: BibliographyItem list) =
     |> List.distinct
 
 
+
 // let x = groupByAuthor bibliographyData
 // printfn "%A" (x.Head)
