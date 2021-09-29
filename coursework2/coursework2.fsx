@@ -207,10 +207,8 @@ let getAuthorsPublications (list: BibliographyItem list) (name: string) =
 let groupByAuthor (list: BibliographyItem list) =
     list
     |> List.collect (getAuthorsFromBibliographyItem)
-    |> List.map (fun name -> (name, getAuthorsPublications list name))
     |> List.distinct
-
-
+    |> List.map (fun name -> (name, getAuthorsPublications list name))
 
 // let x = groupByAuthor bibliographyData
 // printfn "%A" (x.Head)
