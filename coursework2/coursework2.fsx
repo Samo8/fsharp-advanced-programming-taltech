@@ -170,7 +170,7 @@ let compareAuthorsNumPages (a: BibliographyItem) (b: BibliographyItem) : int =
 // If two items are at the same level in the sort order, their order should be preserved.
 
 
-let sortBibliographyByNumPages (list: BibliographyItem list) = list |> Seq.sortBy (getSummedPages)
+let sortBibliographyByNumPages (list: BibliographyItem list) = list |> List.sortBy (getSummedPages)
 
 // List.sortBy
 //     (fun (item: BibliographyItem) ->
@@ -187,7 +187,7 @@ let sortBibliographyByNumPages (list: BibliographyItem list) = list |> Seq.sortB
 
 let sortBibliographyByAuthorNumPages (list: BibliographyItem list) =
     list
-    |> Seq.sortBy (fun item -> getAuthorsFromBibliographyItem item, getSummedPages item)
+    |> List.sortBy (fun item -> getAuthorsFromBibliographyItem item, getSummedPages item)
 // list
 // |> Seq.sortBy (getAuthorsFromBibliographyItem)
 // |> Seq.sortBy (getNumPagesFtomBibliographyItem >> sumPages)
