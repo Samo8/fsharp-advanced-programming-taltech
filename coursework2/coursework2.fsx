@@ -177,7 +177,7 @@ let sortBibliographyByNumPages (list: BibliographyItem list) = list |> Seq.sortB
 //         let (pageFrom, pageTo) = getNumPagesFtomBibliographyItem item
 //         pageTo - pageFrom)
 
-sortBibliographyByNumPages bibliographyData
+// sortBibliographyByNumPages bibliographyData
 
 
 // 6. Make a function
