@@ -188,6 +188,7 @@ let sortBibliographyByNumPages (list: BibliographyItem list) = list |> List.sort
 let sortBibliographyByAuthorNumPages (list: BibliographyItem list) =
     list
     |> List.sortBy (fun item -> getAuthorsFromBibliographyItem item, getSummedPages item)
+
 // list
 // |> Seq.sortBy (getAuthorsFromBibliographyItem)
 // |> Seq.sortBy (getNumPagesFtomBibliographyItem >> sumPages)
