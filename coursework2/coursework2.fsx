@@ -154,8 +154,7 @@ let getSummedPages =
     getNumPagesFromBibliographyItem >> sumPages
 
 let compareAuthorsNumPages (a: BibliographyItem) (b: BibliographyItem) : int =
-    let comp =
-        compareLists (getAuthorsFromBibliographyItem a) (getAuthorsFromBibliographyItem b)
+    let comp = compareAuthors a b
 
     if comp <> 0 then
         comp
