@@ -196,14 +196,14 @@ let calculatePosition (n: int) (position: XY) (direction: Dir) =
 
 
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
-    printf "Volam"
-
     match i % 2 with
     | 0 ->
         { position = calculatePosition m s.position s.direction
           direction = turn s.direction
           history = s.position :: s.history }
     | _ ->
+        // printfn "%A" (s.direction)
+        // printfn "%A" (calculatePosition n s.position s.direction)
         { position = calculatePosition n s.position s.direction
           direction = turn s.direction
           history = s.position :: s.history }
@@ -231,7 +231,7 @@ let performCommand (c: Command) (s: State) : State =
 //       direction = N
 //       history = [] }
 
-// let cc = Loop(-1, 4)
+// let cc = Loop(0, 2)
 
 // printf "%A" (performCommand cc s)
 
