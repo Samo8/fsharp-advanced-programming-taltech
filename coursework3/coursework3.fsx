@@ -202,8 +202,6 @@ let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
           direction = turn s.direction
           history = s.position :: s.history }
     | _ ->
-        // printfn "%A" (s.direction)
-        // printfn "%A" (calculatePosition n s.position s.direction)
         { position = calculatePosition n s.position s.direction
           direction = turn s.direction
           history = s.position :: s.history }
@@ -211,13 +209,13 @@ let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
 
 let performCommand (c: Command) (s: State) : State =
     match c with
-    | Step st ->
+    | Step st when st <> 0 ->
         // let xy =
         //     (iterate st (fun x -> step s.direction)) s.position
         { position = calculatePosition st s.position s.direction
           direction = s.direction
           history = s.position :: s.history }
-    | Turn tu ->
+    | Turn tu when tu <> 0 ->
         { position = s.position
           direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
@@ -231,7 +229,8 @@ let performCommand (c: Command) (s: State) : State =
 //       direction = N
 //       history = [] }
 
-// let cc = Loop(0, 2)
+// // let cc = Loop(-2, 0)
+// let cc = Turn 0
 
 // printf "%A" (performCommand cc s)
 
