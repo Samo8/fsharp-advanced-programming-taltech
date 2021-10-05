@@ -230,7 +230,7 @@ let performCommand (c: Command) (s: State) : State =
 
 // let cc = Loop(3, 2)
 
-// let ff = performCommand cc s
+// let ff = performCommands [ cc; cc ] s
 
 // printfn "%A" ff
 
