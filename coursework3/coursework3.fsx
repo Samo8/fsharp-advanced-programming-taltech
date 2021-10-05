@@ -354,7 +354,7 @@ let sumCommands (result: Command list, initial: Command list) : Command list * C
         match (initial.Head, remainingInitial.Head) with
         | (Step a, Step b) -> (result @ [ Step(a + b) ], remainingInitial)
         | (Turn a, Turn b) -> (result @ [ Turn(a + b) ], remainingInitial)
-        | _ -> (result @ [ initial.Head ], remainingInitial)
+        | _ -> (result @ [ remainingInitial.Head ], remainingInitial)
 
 
 let simplify (list: Command list) : Command list =
