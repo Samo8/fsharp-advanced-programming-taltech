@@ -187,26 +187,26 @@ let step (d: Dir) (xy: XY) : XY =
 //
 // The history is represented so that the most recent item is at the head.
 
-let checkPosition (n: int) (p: XY) (d: Dir) =
+let calculatePosition (n: int) (position: XY) (direction: Dir) =
     match n < 0 with
-    | true -> (iterate n (step (iterate 2 turn d))) p
-    | _ -> (iterate n (step d)) p
+    | true -> (iterate n (step (iterate 2 turn direction))) position
+    | _ -> (iterate n (step direction)) position
 
-let checkDirection (n: int) (d: Dir) =
+let calculateDirection (n: int) (direction: Dir) =
     match n < 0 with
-    | true -> iterate (n % 4) turn d
-    | _ -> iterate n turn d
+    | true -> iterate (n % 4) turn direction
+    | _ -> iterate n turn direction
 
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
 
     match i % 2 with
     | 0 ->
-        { position = checkPosition m s.position s.direction
-          direction = checkDirection m s.direction
+        { position = calculatePosition m s.position s.direction
+          direction = calculateDirection m s.direction
           history = s.position :: s.history }
     | _ ->
-        { position = checkPosition n s.position s.direction
-          direction = checkDirection n s.direction
+        { position = calculatePosition n s.position s.direction
+          direction = calculateDirection n s.direction
           history = s.position :: s.history }
 
 let performCommand (c: Command) (s: State) : State =
@@ -214,12 +214,12 @@ let performCommand (c: Command) (s: State) : State =
     | Step st ->
         // let xy =
         //     (iterate st (fun x -> step s.direction)) s.position
-        { position = checkPosition st s.position s.direction
+        { position = calculatePosition st s.position s.direction
           direction = s.direction
           history = s.position :: s.history }
     | Turn tu ->
         { position = s.position
-          direction = checkDirection tu s.direction
+          direction = calculateDirection tu s.direction
           history = s.history }
     | Loop (m, n) ->
         [ 0 .. 3 ]
@@ -373,7 +373,7 @@ let simplify (list: Command list) : Command list =
     |> List.fold (fun result command -> sumCommands result) ([], list)
     |> fst
 
-let ll = [ Step 1; Step 2; Turn 1 ]
+// let ll = [ Step 1; Step 2; Turn 1 ]
 
-let zz = simplify ll
-printfn "%A" zz
+// let zz = simplify ll
+// printfn "%A" zz
