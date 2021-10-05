@@ -187,15 +187,26 @@ let step (d: Dir) (xy: XY) : XY =
 //
 // The history is represented so that the most recent item is at the head.
 
+let checkPosition (n: int) (p: XY) (d: Dir) =
+    match n < 0 with
+    | true -> (iterate n (step (iterate 2 turn d))) p
+    | _ -> (iterate n (step d)) p
+
+let checkDirection (n: int) (d: Dir) =
+    match n < 0 with
+    | true -> iterate (n % 4) turn d
+    | _ -> iterate n turn d
+
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
+
     match i % 2 with
     | 0 ->
-        { position = (iterate m (step s.direction)) s.position
-          direction = iterate m turn s.direction
+        { position = checkPosition m s.position s.direction
+          direction = checkDirection m s.direction
           history = s.position :: s.history }
     | _ ->
-        { position = (iterate n (step s.direction)) s.position
-          direction = iterate n turn s.direction
+        { position = checkPosition n s.position s.direction
+          direction = checkDirection n s.direction
           history = s.position :: s.history }
 
 let performCommand (c: Command) (s: State) : State =
@@ -203,12 +214,12 @@ let performCommand (c: Command) (s: State) : State =
     | Step st ->
         // let xy =
         //     (iterate st (fun x -> step s.direction)) s.position
-        { position = (iterate st (step s.direction)) s.position
+        { position = checkPosition st s.position s.direction
           direction = s.direction
           history = s.position :: s.history }
     | Turn tu ->
         { position = s.position
-          direction = iterate tu turn s.direction
+          direction = checkDirection tu s.direction
           history = s.history }
     | Loop (m, n) ->
         [ 0 .. 3 ]
@@ -362,7 +373,7 @@ let simplify (list: Command list) : Command list =
     |> List.fold (fun result command -> sumCommands result) ([], list)
     |> fst
 
-// let ll = [ Step 1; Step 2; Turn 1 ]
+let ll = [ Step 1; Step 2; Turn 1 ]
 
-// let zz = simplify ll
-// printfn "%A" zz
+let zz = simplify ll
+printfn "%A" zz
