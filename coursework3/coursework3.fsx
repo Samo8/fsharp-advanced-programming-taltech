@@ -199,11 +199,11 @@ let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
     match i % 2 with
     | 0 ->
         { position = calculatePosition m s.position s.direction
-          direction = iterate (modBy m 4) turn s.direction
+          direction = turn s.direction
           history = s.position :: s.history }
     | _ ->
         { position = calculatePosition n s.position s.direction
-          direction = iterate (modBy n 4) turn s.direction
+          direction = turn s.direction
           history = s.position :: s.history }
 
 
@@ -216,25 +216,25 @@ let performCommand (c: Command) (s: State) : State =
           direction = s.direction
           history = s.position :: s.history }
     | Turn tu ->
-        printfn "%d" (tu % 4)
-
         { position = s.position
           direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
     | Loop (m, n) ->
-        [ 0 .. 3 ]
-        |> List.fold (fun total i -> sumLoopState s i m n) s
+        [ 2 .. 5 ]
+        |> List.fold (fun total i -> sumLoopState total i m n) s
 
 // let s =
 //     { position = (0, 0)
 //       direction = N
 //       history = [] }
 
-// let cc = Turn -2
+// let cc = Loop(3, 2)
 
 // let ff = performCommand cc s
 
 // printfn "%A" ff
+
+// printf "%A" (modBy 0 0)
 
 
 // 3. Define the function
@@ -332,7 +332,7 @@ let unpackLoops (list: Command list) : Command list =
     |> List.collect
         (fun command ->
             match command with
-            | Loop (m, n) -> List.concat [ for i in 0 .. 3 -> getLoopIterrationCommands (i, m, n) ]
+            | Loop (m, n) -> List.concat [ for i in 2 .. 5 -> getLoopIterrationCommands (i, m, n) ]
             | _ -> [ command ])
 
 
