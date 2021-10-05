@@ -219,6 +219,8 @@ let performCommand (c: Command) (s: State) : State =
         { position = s.position
           direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
+    | Loop (m, n) when (m, n) <> (m, 0) -> s
+    | Loop (m, n) when (m, n) <> (0, n) -> s
     | Loop (m, n) when (m, n) <> (0, 0) ->
         [ 2 .. 5 ]
         |> List.fold (fun total i -> sumLoopState total i m n) s
@@ -229,8 +231,8 @@ let performCommand (c: Command) (s: State) : State =
 //       direction = N
 //       history = [] }
 
-// // let cc = Loop(-2, 0)
-// let cc = Turn 0
+// let cc = Loop(0, 100)
+// // let cc = Step 100000
 
 // printf "%A" (performCommand cc s)
 
