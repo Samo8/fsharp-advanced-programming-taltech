@@ -187,6 +187,8 @@ let step (d: Dir) (xy: XY) : XY =
 //
 // The history is represented so that the most recent item is at the head.
 
+let modBy x m = (x % m + m) % m
+
 let calculatePosition (n: int) (position: XY) (direction: Dir) =
     match n < 0 with
     | true -> (iterate n (step (iterate 2 turn direction))) position
@@ -197,11 +199,11 @@ let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
     match i % 2 with
     | 0 ->
         { position = calculatePosition m s.position s.direction
-          direction = iterate (m % 4) turn s.direction
+          direction = iterate (modBy m 4) turn s.direction
           history = s.position :: s.history }
     | _ ->
         { position = calculatePosition n s.position s.direction
-          direction = iterate (n % 4) turn s.direction
+          direction = iterate (modBy n 4) turn s.direction
           history = s.position :: s.history }
 
 
@@ -214,12 +216,25 @@ let performCommand (c: Command) (s: State) : State =
           direction = s.direction
           history = s.position :: s.history }
     | Turn tu ->
+        printfn "%d" (tu % 4)
+
         { position = s.position
-          direction = iterate (tu % 4) turn s.direction
+          direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
     | Loop (m, n) ->
         [ 0 .. 3 ]
         |> List.fold (fun total i -> sumLoopState s i m n) s
+
+// let s =
+//     { position = (0, 0)
+//       direction = N
+//       history = [] }
+
+// let cc = Turn -2
+
+// let ff = performCommand cc s
+
+// printfn "%A" ff
 
 
 // 3. Define the function
