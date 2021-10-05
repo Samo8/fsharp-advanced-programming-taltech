@@ -284,7 +284,7 @@ let singleSteps (list: Command list) : Command list =
         (fun command ->
             match command with
             | Loop (m, n) -> false
-            | Step k when k <> 1 -> false
+            | Step k when abs k <> 1 -> false
             | _ -> true)
 
 
