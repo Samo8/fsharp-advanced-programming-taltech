@@ -191,11 +191,13 @@ let modBy x m = (x % m + m) % m
 
 let calculatePosition (n: int) (position: XY) (direction: Dir) =
     match n < 0 with
-    | true -> (iterate n (step (iterate 2 turn direction))) position
+    | true -> (iterate (abs n) (step (iterate 2 turn direction))) position
     | _ -> (iterate n (step direction)) position
 
 
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
+    printf "Volam"
+
     match i % 2 with
     | 0 ->
         { position = calculatePosition m s.position s.direction
@@ -219,20 +221,20 @@ let performCommand (c: Command) (s: State) : State =
         { position = s.position
           direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
-    | Loop (m, n) ->
+    | Loop (m, n) when (m, n) <> (0, 0) ->
         [ 2 .. 5 ]
         |> List.fold (fun total i -> sumLoopState total i m n) s
+    | _ -> s
 
 // let s =
 //     { position = (0, 0)
 //       direction = N
 //       history = [] }
 
-// let cc = Loop(3, 2)
+// let cc = Loop(-1, 4)
 
-// let ff = performCommands [ cc; cc ] s
+// printf "%A" (performCommand cc s)
 
-// printfn "%A" ff
 
 // printf "%A" (modBy 0 0)
 
@@ -250,6 +252,10 @@ let performCommand (c: Command) (s: State) : State =
 let performCommands (cs: Command list) (s: State) : State =
     cs
     |> List.fold (fun state command -> performCommand command state) s
+
+// let ff = performCommands [ cc; cc ] s
+
+// printfn "%A" ff
 
 
 // 4. Define the function
