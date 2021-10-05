@@ -192,22 +192,18 @@ let calculatePosition (n: int) (position: XY) (direction: Dir) =
     | true -> (iterate n (step (iterate 2 turn direction))) position
     | _ -> (iterate n (step direction)) position
 
-let calculateDirection (n: int) (direction: Dir) =
-    match n < 0 with
-    | true -> iterate (n % 4) turn direction
-    | _ -> iterate n turn direction
 
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
-
     match i % 2 with
     | 0 ->
         { position = calculatePosition m s.position s.direction
-          direction = calculateDirection m s.direction
+          direction = iterate (m % 4) turn s.direction
           history = s.position :: s.history }
     | _ ->
         { position = calculatePosition n s.position s.direction
-          direction = calculateDirection n s.direction
+          direction = iterate (n % 4) turn s.direction
           history = s.position :: s.history }
+
 
 let performCommand (c: Command) (s: State) : State =
     match c with
@@ -219,12 +215,11 @@ let performCommand (c: Command) (s: State) : State =
           history = s.position :: s.history }
     | Turn tu ->
         { position = s.position
-          direction = calculateDirection tu s.direction
+          direction = iterate (tu % 4) turn s.direction
           history = s.history }
     | Loop (m, n) ->
         [ 0 .. 3 ]
         |> List.fold (fun total i -> sumLoopState s i m n) s
-
 
 
 // 3. Define the function
