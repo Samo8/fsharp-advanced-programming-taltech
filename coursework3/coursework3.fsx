@@ -357,7 +357,7 @@ let unpackLoops (list: Command list) : Command list =
 //   you see is of a different kind, then you first simplify this part,
 //   add it to the simplified part and then continue.
 
-let ns (list: Command list) (command: Command) : Command list =
+let sumCommandsSimplify (command: Command) (list: Command list) : Command list =
     match command, list with
     | Step a, Step b :: returnList -> Step(a + b) :: returnList
     | Turn a, Turn b :: returnList -> Turn(modBy (a + b) 4) :: returnList
@@ -366,7 +366,8 @@ let ns (list: Command list) (command: Command) : Command list =
         | Turn n -> Turn(modBy n 4) :: list
         | _ -> command :: list
 
-let simplify (list: Command list) : Command list = list |> List.fold (ns) [] |> List.rev
+let simplify (list: Command list) : Command list =
+    List.foldBack (sumCommandsSimplify) list []
 
 // let ll = [ Step 1; Step 2; Turn 7; Step 4 ]
 
