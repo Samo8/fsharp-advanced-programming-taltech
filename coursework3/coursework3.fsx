@@ -198,25 +198,20 @@ let calculatePosition (n: int) (position: XY) (direction: Dir) =
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
     match i % 2 with
     | 0 ->
-        match m with
-        | 0 ->
-            { position = calculatePosition m s.position s.direction
-              direction = turn s.direction
-              history = s.history }
-        | _ ->
-            { position = calculatePosition m s.position s.direction
-              direction = turn s.direction
-              history = s.position :: s.history }
+        { position = calculatePosition m s.position s.direction
+          direction = turn s.direction
+          history =
+              match m with
+              | 0 -> s.history
+              | _ -> s.position :: s.history }
     | _ ->
-        match n with
-        | 0 ->
-            { position = calculatePosition n s.position s.direction
-              direction = turn s.direction
-              history = s.history }
-        | _ ->
-            { position = calculatePosition n s.position s.direction
-              direction = turn s.direction
-              history = s.position :: s.history }
+        { position = calculatePosition n s.position s.direction
+          direction = turn s.direction
+          history =
+              match n with
+              | 0 -> s.history
+              | _ -> s.position :: s.history }
+
 
 
 let performCommand (c: Command) (s: State) : State =
