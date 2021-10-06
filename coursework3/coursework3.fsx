@@ -198,20 +198,30 @@ let calculatePosition (n: int) (position: XY) (direction: Dir) =
 let sumLoopState (s: State) (i: int) (m: int) (n: int) : State =
     match i % 2 with
     | 0 ->
-        { position = calculatePosition m s.position s.direction
-          direction = turn s.direction
-          history = s.position :: s.history }
+        match m with
+        | 0 ->
+            { position = calculatePosition m s.position s.direction
+              direction = turn s.direction
+              history = s.history }
+        | _ ->
+            { position = calculatePosition m s.position s.direction
+              direction = turn s.direction
+              history = s.position :: s.history }
     | _ ->
-        { position = calculatePosition n s.position s.direction
-          direction = turn s.direction
-          history = s.position :: s.history }
+        match n with
+        | 0 ->
+            { position = calculatePosition n s.position s.direction
+              direction = turn s.direction
+              history = s.history }
+        | _ ->
+            { position = calculatePosition n s.position s.direction
+              direction = turn s.direction
+              history = s.position :: s.history }
 
 
 let performCommand (c: Command) (s: State) : State =
     match c with
     | Step st when st <> 0 ->
-        // let xy =
-        //     (iterate st (fun x -> step s.direction)) s.position
         { position = calculatePosition st s.position s.direction
           direction = s.direction
           history = s.position :: s.history }
@@ -219,8 +229,6 @@ let performCommand (c: Command) (s: State) : State =
         { position = s.position
           direction = iterate (modBy tu 4) turn s.direction
           history = s.history }
-    | Loop (m, n) when (m, n) <> (m, 0) -> s
-    | Loop (m, n) when (m, n) <> (0, n) -> s
     | Loop (m, n) when (m, n) <> (0, 0) ->
         [ 2 .. 5 ]
         |> List.fold (fun total i -> sumLoopState total i m n) s
@@ -231,13 +239,11 @@ let performCommand (c: Command) (s: State) : State =
 //       direction = N
 //       history = [] }
 
-// let cc = Loop(0, 100)
+// let cc = Loop(3, 0)
 // // let cc = Step 100000
 
 // printf "%A" (performCommand cc s)
 
-
-// printf "%A" (modBy 0 0)
 
 
 // 3. Define the function
@@ -371,26 +377,131 @@ let unpackLoops (list: Command list) : Command list =
 //   you see is of a different kind, then you first simplify this part,
 //   add it to the simplified part and then continue.
 
+let cmdType (command: Command) =
+    match command with
+    | Step a -> a
+    | Turn t -> t
+    | _ -> 0
 
-let sumCommands (result: Command list, initial: Command list) : Command list * Command list =
-    printfn "%A" initial
-    let remainingInitial = List.tail initial
 
-    match remainingInitial with
+let sumCommands (result: Command list, initial: Command list) (command: Command) : Command list * Command list =
+    // printfn "%A" initial
+    let remaining = List.tail initial
+
+    // printfn "remaining %A" remaining
+
+    match remaining with
     | [] -> (result, initial)
     | _ ->
-        match (initial.Head, remainingInitial.Head) with
-        | (Step a, Step b) -> (result @ [ Step(a + b) ], remainingInitial)
-        | (Turn a, Turn b) -> (result @ [ Turn(a + b) ], remainingInitial)
-        | _ -> (result @ [ remainingInitial.Head ], remainingInitial)
+        match (initial.Head, remaining.Head) with
+        | (Step a, Step b) ->
+            let differentItemIndex =
+                remaining
+                |> List.findIndex
+                    (fun x ->
+                        match x with
+                        | Step _ -> false
+                        | _ -> true)
+
+            let p =
+                remaining |> List.splitAt differentItemIndex
+
+            let z =
+                p
+                |> fst
+                |> List.fold (fun rslt curr -> Step(cmdType rslt + cmdType curr)) initial.Head
+
+            printfn "%A" (snd p)
+
+            (result @ [ z ], snd (p))
+        | (Turn a, Turn b) ->
+            printfn "%A rem" remaining
+
+            let differentItemIndex =
+                remaining
+                |> List.findIndex
+                    (fun x ->
+                        match x with
+                        | Turn _ -> false
+                        | _ -> true)
+
+            let p =
+                remaining |> List.splitAt differentItemIndex
+
+            let z =
+                p
+                |> fst
+                |> List.fold (fun rslt curr -> Turn(cmdType rslt + cmdType curr)) initial.Head
+            // remaining.Head
+
+            (result @ [ z ], snd p)
+        | _ -> (result @ [ remaining.Head ], remaining)
+// match (command, remaining.Head) with
+// | (Step a, Step b) -> (result @ [ Step(a + b) ], remaining)
+// | (Turn a, Turn b) -> (result @ [ Turn(a + b) ], remaining)
+// | _ -> (result @ [ remaining.Head ], remaining)
+
+let newSumm (result: Command list, initial: Command list) (command: Command) =
+    match (result.Head, initial.Head) with
+    | (Step a, Step b) -> (result, initial)
+    | _ -> (result, initial)
+
+
+// let ns (command: Command) (initial: Command list) =
+//     printfn "%A" command
+//     printfn "%A\n" initial.Head
+
+//     // match initial with
+//     // | [] -> (result, initial)
+//     // | _ ->
+//     match (command, initial.Head) with
+//     | (Step a, Step b) ->
+//         printfn "s: %A" (initial @ [ Step(a + b) ], List.tail initial)
+//         (result @ [ Step(a + b) ], List.tail initial)
+//     | (Turn a, Turn b) -> (result @ [ Turn(a + b) ], List.tail initial)
+//     | _ -> (result, initial)
+
+
+let ttt (result: Command list, initial: Command list) =
+
+    match (initial, List.tail initial) with
+    | ([], []) -> (result, initial)
+    | (_, []) -> (result @ [ initial.Head ], initial)
+    | _ ->
+        let tail = List.tail initial
+        let command = tail.Head
+
+        match (command, tail.Head) with
+        | (Step a, Step b) ->
+            printfn "s: %A" (result @ [ Step(a + b) ], tail)
+            let revList = result |> List.rev
+            let revHead = List.head revList
+            let revListTailed = List.tail revList
+            (result @ [ Step(a + b) ], tail)
+        | (Turn a, Turn b) -> (result @ [ Turn(a + b) ], tail)
+        | _ -> (result, initial)
 
 
 let simplify (list: Command list) : Command list =
     list
-    |> List.fold (fun result command -> sumCommands result) ([], list)
+    |> List.fold (fun result _ -> ttt result) ([ list.Head ], list)
     |> fst
+// list
+// |> List.fold (fun result command -> ns command (List.tail result)) list
+// list
+// |> List.foldBack (fun command result -> []) (list, list)
+// |> fst
 
-// let ll = [ Step 1; Step 2; Turn 1 ]
+
+// list
+// |> List.fold (fun result command -> ns command (List.tail result)) list
+// |> fst
+
+// list
+// |> List.fold (fun result command -> sumCommands result command) ([], list)
+// |> fst
+
+// let ll = [ Step 1; Step 2; Step 7; Step 4 ]
 
 // let zz = simplify ll
-// printfn "%A" zz
+// printfn "\n\n%A" zz
