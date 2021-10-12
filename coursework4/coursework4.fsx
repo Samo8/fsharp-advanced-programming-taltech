@@ -213,7 +213,19 @@ let addValue (v: Ecma) (e: Ecma) : Ecma =
 //
 //   1 + countValues e <= countValues (addNameValue (n, v) e)    // if e is an object representation
 
-let countValues (e: Ecma) : int = 0
+let rec countValues (e: Ecma) : int =
+    match e with
+    | List list ->
+        countValues (list.Head)
+        + countValues (List(list.Tail))
+    | Object o ->
+        let list = o |> Map.toList |> List.map snd
+
+        countValues (list.Head)
+        + countValues (List(list.Tail))
+    // countValues (x)
+    | None -> 0
+    | _ -> 1
 
 
 
