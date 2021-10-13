@@ -65,7 +65,6 @@ type Name = string
 type Number =
     | Int of int
     | Float of float
-    | Double of double
 
 
 type Ecma =
@@ -74,7 +73,7 @@ type Ecma =
     | Number of Number
     | Text of string
     | List of list<Ecma>
-    | Object of Map<Name, Ecma>
+    | Object of (Name * Ecma) list
 
 
 // Define the following functions for creating ECMA-404
@@ -89,7 +88,7 @@ that creates a representation for an empty object structure.
 *)
 
 
-let mkObject () : Ecma = Object(Map.empty)
+let mkObject () : Ecma = Object([])
 
 
 
@@ -169,8 +168,11 @@ let mkNull () : Ecma = None
 
 let addNameValue (n: Name, v: Ecma) (e: Ecma) : Ecma =
     match e with
-    | Object o -> Object(o |> Map.add n v)
+    | Object o -> Object(o @ [ n, v ])
     | _ -> e
+// match e with
+// | Object o -> Object(o |> Map.add n v)
+// | _ -> e
 
 
 // Define the function
@@ -219,30 +221,45 @@ let rec countValues (e: Ecma) : int =
         list
         |> List.fold (fun v item -> v + countValues item) 1
     | Object o ->
-        let list = o |> Map.toList |> List.map snd
+        // let list = o |> Map.toList |> List.map snd
+        // let list = o |> List.map snd
 
-        list
-        |> List.fold (fun v item -> v + countValues item) 1
+        o
+        |> List.fold (fun v item -> v + countValues (snd item)) 1
     // | None -> 0
     | _ -> 1
 
-// let person: Map<Name, Ecma> =
-//     [ "name", Text "Adam"
-//       "age", Number(Float 33.3) ]
-//     |> Map.ofList
+let person =
+    [ ("name", Text "Samuel")
+      ("age", Number(Float 2.3)) ]
 
-// let capitals: Map<Name, Ecma> =
-//     [ "Argentina", None
-//       "France ", Text "Paris"
-//       "Chili", Object person
-//       "Malaysia", Text "Kuala Lumpur"
-//       "Switzerland", Text "Bern" ]
-//     |> Map.ofList
+let cars =
+    [ "Skoda", None
+      "VW ", Text "Golf"
+      "Random", Object person
+      "Lamborghini", Text "Aventador"
+      "Mercedes", Text "G"
+      "BMW", List([ Text "M5"; Text "X6" ]) ]
 
-// let e: Ecma = Object(capitals)
+// printfn "%A" cars
 
-// printfn "%A" (countValues e)
+// let e: Ecma = Object(cars)
 
+// let emptyListEcma = List([])
+// let emptyMapEcma = Object(Map.empty)
+
+
+// printfn "%A" (countValues emptyMapEcma)
+
+// let emptyEcma1 =
+//     addNameValue ("Nieco", Number(Int 3)) (emptyMapEcma)
+
+// printfn "%A" (countValues emptyEcma1)
+
+// let emptyEcma2 =
+//     addNameValue ("Nieco", Number(Int 3)) (emptyEcma1)
+
+// printfn "%A" (countValues emptyEcma2)
 
 //// Task 4 ////
 
@@ -299,7 +316,19 @@ type Path = Name list
 
 
 let listPaths (ecma: Ecma) : Path list = []
+// match ecma with
+// | List l -> []
+// | Object o ->
+//     let z =
+//         o
+//         |> Map.fold (fun state key value -> state @ [ [] ]) [ [] ]
 
+//     []
+// | _ -> []
+
+
+// let z = [ [] ]
+// z @ [ [ "" ] ]
 
 //// Task 5 ////
 
