@@ -392,21 +392,50 @@ let capitals =
 // whitespace was part of a name or a string value.
 
 
+
 let rec show (ecma: Ecma) =
     match ecma with
     | Object o ->
-        (o
-         |> List.fold (fun res (name, e) -> res + "\"" + name + "\":" + show e + ",") "{")
-        + "},"
+        "{\""
+        + fst (o.Head)
+        + "\":"
+        + show (snd (o.Head))
+        + (o.Tail
+           |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
+        + "}"
     // | List ll when ll.Length = 1 -> "[" + ll.Head.ToString() + "]"
     | List l ->
-        (l
-         |> List.fold (fun res e -> res + show e + ",") "[")
+        "["
+        + show (l.Head)
+        + (l.Tail
+           |> List.fold (fun res e -> res + "," + show e) "")
         + "]"
     | Bool b -> b.ToString().ToLower()
     | Number n -> n.ToString()
-    | Text t -> t
+    | Text t -> "\"" + t + "\""
     | None -> "null"
+// match ecma with
+// | Object o ->
+//     match o with
+//     | [] -> ""
+//     | l ->
+//         // printfn "%A" l
+
+//         "{"
+//         + fst (o.Head)
+//         + ":"
+//         + show (snd (o.Head))
+//         + show (Object(o.Tail))
+//         + "}"
+// | List l ->
+//     match l.Tail with
+//     | [] -> ""
+//     | _ -> "[" + show (List(l.Tail)) + "]"
+// | Bool b -> b.ToString().ToLower()
+// | Number n -> n.ToString()
+// | Text t -> t
+// | None -> "null"
+
 
 // printfn "%s" (show (List([ Bool false; Text "fasf" ])))
 
@@ -417,6 +446,9 @@ let rec show (ecma: Ecma) =
 //           ("2_nohy", Bool true) ]
 //     )
 
+// let listik = List([ Text "Samuel"; Bool true ])
+
+// // printfn "%s" (show listik)
 // printfn "%s" (show (Object capitals))
 
 // printfn "%s" "aa"
