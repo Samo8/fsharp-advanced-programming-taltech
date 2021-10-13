@@ -391,35 +391,36 @@ let capitals =
 // The result should not contain any whitespace except when this
 // whitespace was part of a name or a string value.
 
-
+let objKey (s: string) = "{\"" + s + "\":"
 
 let rec show (ecma: Ecma) =
     match ecma with
-    | Object o ->
-        match o with
-        | [] -> "{}"
-        | _ ->
-            "{\""
-            + fst (o.Head)
-            + "\":"
-            + show (snd (o.Head))
-            + (o.Tail
-               |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
-            + "}"
-    | List l ->
-        match l with
-        | [] -> "[]"
-        | _ ->
-            "["
-            + show (l.Head)
-            + (l.Tail
-               |> List.fold (fun res e -> res + "," + show e) "")
-            + "]"
+    | Object o -> objToJson o
+    | List l -> listToJson l
     | Bool b -> b.ToString().ToLower()
     | Number n -> n.ToString()
     | Text t -> "\"" + t + "\""
     | None -> "null"
 
+and objToJson (object: list<Name * Ecma>) =
+    match object with
+    | [] -> "{}"
+    | _ ->
+        objKey (fst object.Head)
+        + show (snd (object.Head))
+        + (object.Tail
+           |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
+        + "}"
+
+and listToJson (list: list<Ecma>) =
+    match list with
+    | [] -> "[]"
+    | _ ->
+        "["
+        + show (list.Head)
+        + (list.Tail
+           |> List.fold (fun res e -> res + "," + show e) "")
+        + "]"
 
 // printfn
 //     "%s"
