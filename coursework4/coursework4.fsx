@@ -396,59 +396,54 @@ let capitals =
 let rec show (ecma: Ecma) =
     match ecma with
     | Object o ->
-        "{\""
-        + fst (o.Head)
-        + "\":"
-        + show (snd (o.Head))
-        + (o.Tail
-           |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
-        + "}"
-    // | List ll when ll.Length = 1 -> "[" + ll.Head.ToString() + "]"
+        match o with
+        | [] -> "{}"
+        | _ ->
+            "{\""
+            + fst (o.Head)
+            + "\":"
+            + show (snd (o.Head))
+            + (o.Tail
+               |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
+            + "}"
     | List l ->
-        "["
-        + show (l.Head)
-        + (l.Tail
-           |> List.fold (fun res e -> res + "," + show e) "")
-        + "]"
+        match l with
+        | [] -> "[]"
+        | _ ->
+            "["
+            + show (l.Head)
+            + (l.Tail
+               |> List.fold (fun res e -> res + "," + show e) "")
+            + "]"
     | Bool b -> b.ToString().ToLower()
     | Number n -> n.ToString()
     | Text t -> "\"" + t + "\""
     | None -> "null"
-// match ecma with
-// | Object o ->
-//     match o with
-//     | [] -> ""
-//     | l ->
-//         // printfn "%A" l
-
-//         "{"
-//         + fst (o.Head)
-//         + ":"
-//         + show (snd (o.Head))
-//         + show (Object(o.Tail))
-//         + "}"
-// | List l ->
-//     match l.Tail with
-//     | [] -> ""
-//     | _ -> "[" + show (List(l.Tail)) + "]"
-// | Bool b -> b.ToString().ToLower()
-// | Number n -> n.ToString()
-// | Text t -> t
-// | None -> "null"
 
 
-// printfn "%s" (show (List([ Bool false; Text "fasf" ])))
+// printfn
+//     "%s"
+//     (show (
+//         List(
+//             [ Bool false
+//               Text "fasf"
+//               Number 4.5
+//               Number 1.0 ]
+//         )
+//     ))
 
 // let obj =
 //     Object(
 //         [ ("meno", Text "Samuel")
 //           ("priezvisko", Text "Dubovec")
-//           ("2_nohy", Bool true) ]
+//           ("2_nohy", Bool true)
+//           ("xx", Object([]))
+//           ("y", List([])) ]
 //     )
 
 // let listik = List([ Text "Samuel"; Bool true ])
 
-// // printfn "%s" (show listik)
+// printfn "%s" (show obj)
 // printfn "%s" (show (Object capitals))
 
 // printfn "%s" "aa"
