@@ -62,15 +62,10 @@ type Name = string
 // The type must satisfy the constraint `equality`.
 
 
-type Number =
-    | Int of int
-    | Float of float
-
-
 type Ecma =
     | None
     | Bool of bool
-    | Number of Number
+    | Number of float
     | Text of string
     | List of list<Ecma>
     | Object of (Name * Ecma) list
@@ -100,7 +95,7 @@ Define the function
 that creates a representation for the given floating-point number.
 *)
 
-let mkNumber value = Number(Float value)
+let mkNumber value = Number value
 
 
 (*
@@ -170,9 +165,6 @@ let addNameValue (n: Name, v: Ecma) (e: Ecma) : Ecma =
     match e with
     | Object o -> Object(o @ [ n, v ])
     | _ -> e
-// match e with
-// | Object o -> Object(o |> Map.add n v)
-// | _ -> e
 
 
 // Define the function
@@ -188,7 +180,6 @@ let addNameValue (n: Name, v: Ecma) (e: Ecma) : Ecma =
 //
 // - a representation for the array e with the value v added as the last
 //   element, otherwise.
-
 
 let addValue (v: Ecma) (e: Ecma) : Ecma =
     match e with
@@ -221,25 +212,21 @@ let rec countValues (e: Ecma) : int =
         list
         |> List.fold (fun v item -> v + countValues item) 1
     | Object o ->
-        // let list = o |> Map.toList |> List.map snd
-        // let list = o |> List.map snd
-
         o
         |> List.fold (fun v item -> v + countValues (snd item)) 1
-    // | None -> 0
     | _ -> 1
 
-let person =
-    [ ("name", Text "Samuel")
-      ("age", Number(Float 2.3)) ]
+// let person =
+//     [ ("name", Text "Samuel")
+//       ("age", Number(Float 2.3)) ]
 
-let cars =
-    [ "Skoda", None
-      "VW ", Text "Golf"
-      "Random", Object person
-      "Lamborghini", Text "Aventador"
-      "Mercedes", Text "G"
-      "BMW", List([ Text "M5"; Text "X6" ]) ]
+// let cars =
+//     [ "Skoda", None
+//       "VW ", Text "Golf"
+//       "Random", Object person
+//       "Lamborghini", Text "Aventador"
+//       "Mercedes", Text "G"
+//       "BMW", List([ Text "M5"; Text "X6" ]) ]
 
 // printfn "%A" cars
 
