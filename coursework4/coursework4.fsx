@@ -302,20 +302,81 @@ type Path = Name list
 // Note that the empty list denotes the path to the root object.
 
 
-let listPaths (ecma: Ecma) : Path list = []
+let rec listPaths (ecma: Ecma) : Path list =
+    match ecma with
+    | Object object ->
+        object
+        |> List.fold
+            (fun state (key, value) ->
+                match value with
+                | List list ->
+                    printfn "%A" (state @ [ [ key ] ])
+                    let z = state @ [ [ key ] ]
+                    z @ [ [ key ] ] @ (listPaths (List list))
+                | Object ob -> state @ [ [ key ] ] @ (listPaths (Object ob))
+                | _ -> state @ [ [ key ] ])
+            []
+    | List list ->
+        list
+        |> List.fold
+            (fun state value ->
+                match value with
+                | List list -> state @ (listPaths (List list))
+                | Object ob -> state @ (listPaths (Object ob))
+                | _ -> state)
+            []
+    | _ -> []
 // match ecma with
-// | List l -> []
-// | Object o ->
-//     let z =
-//         o
-//         |> Map.fold (fun state key value -> state @ [ [] ]) [ [] ]
+// | List l when l.Length <> 0 -> listPaths (l.Head) @ listPaths (List(l.Tail))
+// | Object o when o.Length <> 0 -> [ [ fst (o.Head) ] ] @ listPaths (Object(o.Tail))
+// | _ -> []
 
-//     []
+// match ecma with
+// | Object object ->
+//     object
+//     |> List.fold
+//         (fun state (key, value) ->
+//             match value with
+//             | List list ->
+//                 printfn "%A" (state @ [ [ key ] ])
+//                 let z = state @ [ [ key ] ]
+//                 z @ [ [ key ] ] @ (listPaths (List list))
+//             | Object ob -> state @ [ [ key ] ] @ (listPaths (Object ob))
+//             | _ -> state @ [ [ key ] ])
+//         []
+// | List list ->
+//     list
+//     |> List.fold
+//         (fun state value ->
+//             match value with
+//             | List list -> state @ (listPaths (List list))
+//             | Object ob -> state @ (listPaths (Object ob))
+//             | _ -> state)
+//         []
 // | _ -> []
 
 
-// let z = [ [] ]
-// z @ [ [ "" ] ]
+let capitals =
+    [ "abc", Bool false
+      "xs",
+      List(
+          [ Object([ "a", Text "a" ])
+            Number 1.0
+            Bool true
+            Object([ "b", Text "b" ])
+            Bool false ]
+      )
+      "xyz",
+      Object(
+          [ "a", Number 1.0
+            "b", Object([ "b", Text "b" ]) ]
+      )
+      "ws", List([ Bool false ]) ]
+
+// let e: Ecma = Object(capitals)
+
+// printfn "%A" (listPaths e)
+
 
 //// Task 5 ////
 
@@ -331,9 +392,34 @@ let listPaths (ecma: Ecma) : Path list = []
 // whitespace was part of a name or a string value.
 
 
-let show (ecma: Ecma) = ""
+let rec show (ecma: Ecma) =
+    match ecma with
+    | Object o ->
+        (o
+         |> List.fold (fun res (name, e) -> res + "\"" + name + "\":" + show e + ",") "{")
+        + "},"
+    // | List ll when ll.Length = 1 -> "[" + ll.Head.ToString() + "]"
+    | List l ->
+        (l
+         |> List.fold (fun res e -> res + show e + ",") "[")
+        + "]"
+    | Bool b -> b.ToString().ToLower()
+    | Number n -> n.ToString()
+    | Text t -> t
+    | None -> "null"
 
+// printfn "%s" (show (List([ Bool false; Text "fasf" ])))
 
+// let obj =
+//     Object(
+//         [ ("meno", Text "Samuel")
+//           ("priezvisko", Text "Dubovec")
+//           ("2_nohy", Bool true) ]
+//     )
+
+// printfn "%s" (show (Object capitals))
+
+// printfn "%s" "aa"
 
 
 //// Task 6 ////
