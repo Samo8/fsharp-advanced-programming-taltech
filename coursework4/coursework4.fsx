@@ -223,10 +223,25 @@ let rec countValues (e: Ecma) : int =
 
         list
         |> List.fold (fun v item -> v + countValues item) 1
-    | None -> 0
+    // | None -> 0
     | _ -> 1
 
+// let person: Map<Name, Ecma> =
+//     [ "name", Text "Adam"
+//       "age", Number(Float 33.3) ]
+//     |> Map.ofList
 
+// let capitals: Map<Name, Ecma> =
+//     [ "Argentina", None
+//       "France ", Text "Paris"
+//       "Chili", Object person
+//       "Malaysia", Text "Kuala Lumpur"
+//       "Switzerland", Text "Bern" ]
+//     |> Map.ofList
+
+// let e: Ecma = Object(capitals)
+
+// printfn "%A" (countValues e)
 
 
 //// Task 4 ////
