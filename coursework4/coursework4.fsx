@@ -217,12 +217,12 @@ let rec countValues (e: Ecma) : int =
     match e with
     | List list ->
         list
-        |> List.fold (fun v item -> v + countValues item) 0
+        |> List.fold (fun v item -> v + countValues item) 1
     | Object o ->
         let list = o |> Map.toList |> List.map snd
 
         list
-        |> List.fold (fun v item -> v + countValues item) 0
+        |> List.fold (fun v item -> v + countValues item) 1
     | None -> 0
     | _ -> 1
 
