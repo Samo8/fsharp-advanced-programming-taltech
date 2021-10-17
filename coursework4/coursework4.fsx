@@ -316,7 +316,6 @@ let rec listPaths (ecma: Ecma) : Path list =
     [] :: paths ecma []
 
 
-
 // let capitals =
 //     [ "x", Bool true
 //       "abc", Bool false
