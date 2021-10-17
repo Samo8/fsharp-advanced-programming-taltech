@@ -303,75 +303,37 @@ type Path = Name list
 
 
 let rec listPaths (ecma: Ecma) : Path list =
-    match ecma with
-    | Object object ->
-        object
-        |> List.fold
-            (fun state (key, value) ->
-                match value with
-                | List list ->
-                    printfn "%A" (state @ [ [ key ] ])
-                    let z = state @ [ [ key ] ]
-                    z @ [ [ key ] ] @ (listPaths (List list))
-                | Object ob -> state @ [ [ key ] ] @ (listPaths (Object ob))
-                | _ -> state @ [ [ key ] ])
-            []
-    | List list ->
-        list
-        |> List.fold
-            (fun state value ->
-                match value with
-                | List list -> state @ (listPaths (List list))
-                | Object ob -> state @ (listPaths (Object ob))
-                | _ -> state)
-            []
-    | _ -> []
-// match ecma with
-// | List l when l.Length <> 0 -> listPaths (l.Head) @ listPaths (List(l.Tail))
-// | Object o when o.Length <> 0 -> [ [ fst (o.Head) ] ] @ listPaths (Object(o.Tail))
-// | _ -> []
+    let rec paths (e: Ecma) (prefix: Path) : Path list =
+        match e with
+        | Object ((name, value) :: tail) ->
+            let newPrefix = prefix @ [ name ]
 
-// match ecma with
-// | Object object ->
-//     object
-//     |> List.fold
-//         (fun state (key, value) ->
-//             match value with
-//             | List list ->
-//                 printfn "%A" (state @ [ [ key ] ])
-//                 let z = state @ [ [ key ] ]
-//                 z @ [ [ key ] ] @ (listPaths (List list))
-//             | Object ob -> state @ [ [ key ] ] @ (listPaths (Object ob))
-//             | _ -> state @ [ [ key ] ])
-//         []
-// | List list ->
-//     list
-//     |> List.fold
-//         (fun state value ->
-//             match value with
-//             | List list -> state @ (listPaths (List list))
-//             | Object ob -> state @ (listPaths (Object ob))
-//             | _ -> state)
-//         []
-// | _ -> []
+            [ newPrefix ]
+            @ paths value newPrefix @ paths (Object tail) prefix
+        | List (head :: tail) -> paths head prefix @ paths (List tail) prefix
+        | _ -> []
+
+    [] :: paths ecma []
 
 
-let capitals =
-    [ "abc", Bool false
-      "xs",
-      List(
-          [ Object([ "a", Text "a" ])
-            Number 1.0
-            Bool true
-            Object([ "b", Text "b" ])
-            Bool false ]
-      )
-      "xyz",
-      Object(
-          [ "a", Number 1.0
-            "b", Object([ "b", Text "b" ]) ]
-      )
-      "ws", List([ Bool false ]) ]
+
+// let capitals =
+//     [ "x", Bool true
+//       "abc", Bool false
+//       "xs",
+//       List(
+//           [ Object([ "a", Text "a" ])
+//             Number 1.0
+//             Bool true
+//             Object([ "b", Text "b" ])
+//             Bool false ]
+//       )
+//       "xyz",
+//       Object(
+//           [ "a", Number 1.0
+//             "b", Object([ "b", Text "b" ]) ]
+//       )
+//       "ws", List([ Bool false ]) ]
 
 // let e: Ecma = Object(capitals)
 
@@ -391,22 +353,23 @@ let capitals =
 // The result should not contain any whitespace except when this
 // whitespace was part of a name or a string value.
 
-let objKey (s: string) = "{\"" + s + "\":"
 
 let rec show (ecma: Ecma) =
     match ecma with
-    | Object o -> objToJson o
+    | Object o -> objectToJson o
     | List l -> listToJson l
     | Bool b -> b.ToString().ToLower()
     | Number n -> n.ToString()
     | Text t -> "\"" + t + "\""
     | None -> "null"
 
-and objToJson (object: list<Name * Ecma>) =
+and objectToJson (object: list<Name * Ecma>) =
     match object with
     | [] -> "{}"
     | _ ->
-        objKey (fst object.Head)
+        "{\""
+        + fst object.Head
+        + "\":"
         + show (snd (object.Head))
         + (object.Tail
            |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
@@ -421,6 +384,11 @@ and listToJson (list: list<Ecma>) =
         + (list.Tail
            |> List.fold (fun res e -> res + "," + show e) "")
         + "]"
+
+// let x =
+//     Object([ ("text", List([ Number 1.0; Bool false ])) ])
+
+// printfn "%s" (show x)
 
 // printfn
 //     "%s"
@@ -452,6 +420,29 @@ and listToJson (list: list<Ecma>) =
 
 //// Task 6 ////
 
+//   {
+//     "abc" : false,
+//     "xs"  : [ { "a" : "a" }, 1.0, true, { "b" : "b" }, false ],
+//     "xyz" : { "a" : 1.0,
+//               "b" : { "b" : "b" } },
+//     "ws"  : [ false ]
+//   }
+//
+// then  `listPaths e` should result in
+//
+//   [
+//     [];
+//     ["abc"];
+//     ["xs"];
+//     ["xs"; "a"];
+//     ["xs"; "b"];
+//     ["xyz"];
+//     ["xyz"; "a"];
+//     ["xyz"; "b"];
+//     ["xyz"; "b"; "b"];
+//     ["ws"]
+//   ]
+
 // Define the function
 //
 //   delete : Path list -> Ecma -> Ecma
@@ -467,8 +458,25 @@ and listToJson (list: list<Ecma>) =
 // an exception. Hint: use `failwith` in the appropriate case.
 
 
-let delete (list: Path list) (e: Ecma) : Ecma = None
 
+let delete (list: Path list) (e: Ecma) : Ecma = e
+
+// let listPathCapital = [ [ "abc" ]; [ "xs" ] ]
+// let listPathCapital = [ [ "abc" ] ]
+
+// printfn "%A" (Object capitals)
+// printfn "%A" (delete listPathCapital (Object capitals))
+
+// [ []
+//   [ "abc" ]
+//   [ "xs" ]
+//   [ "xs"; "a" ]
+//   [ "xs"; "b" ]
+//   [ "xyz" ]
+//   [ "xyz"; "a" ]
+//   [ "xyz"; "b" ]
+//   [ "xyz"; "b"; "b" ]
+//   [ "ws" ] ]
 
 
 //// Task 7 ////
