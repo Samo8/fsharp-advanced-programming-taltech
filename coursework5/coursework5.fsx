@@ -313,7 +313,11 @@ let b2: BExpr =
 
 let b3: BExpr = Or(HasStringValue("b3"), HasKey("b3"))
 
-let s2: Selector = OneOrMore(Match(HasStringValue("xyz")))
+let s1: Selector =
+    Sequence(Match True, Sequence(Match True, Match(HasKey("abc"))))
+
+let s2: Selector =
+    Sequence(OneOrMore(Match(HasStringValue("xyz"))), Match True)
 
 // 2. Define the function
 //
@@ -332,13 +336,83 @@ let s2: Selector = OneOrMore(Match(HasStringValue("xyz")))
 // with the representation for null.
 
 
+// let rec eval (expr: BExpr) (ecma: Ecma) =
+//     match expr with
+//     | True -> true
+//     | _ -> true
 
 
+let contains (list: 'b list) (item: 'b) : bool = list |> List.contains item
 
+let keyExists (list: (string * 'a) list) (key: string) : bool =
+    list |> List.exists (fun (name, _) -> name = key)
 
+let generalizedMathObject (object: (Name * Ecma) list) (item: 'a) : bool = false
 
-
-
+// let rec eval (expression: BExpr) (e: Ecma) : bool =
+//     match expression with
+//     | True -> true
+//     | Not exp -> not (eval exp e)
+//     | And (firstE, secondE) -> (eval firstE e) && (eval secondE e)
+//     | Or (firstE, secondE) -> (eval firstE e) || (eval secondE e)
+//     | HasKey key ->
+//         match e with
+//         | Object object -> keyExists object key
+//         | _ -> false
+//     | HasStringValue string ->
+//         match e with
+//         | Text str -> string = str
+//         | List list -> contains list (Text string)
+//         | Object object ->
+//             object
+//             |> List.exists
+//                 (fun (_, value) ->
+//                     match value with
+//                     | Text s -> s = string
+//                     | _ -> false)
+//         | _ -> false
+//     | HasNumericValueInRange (xmin, xmax) ->
+//         match e with
+//         | Number n -> n <= xmax && n >= xmin
+//         | List list ->
+//             list
+//             |> List.exists
+//                 (fun item ->
+//                     match item with
+//                     | Number n -> n <= xmax && n >= xmin
+//                     | _ -> false)
+//         | Object object ->
+//             object
+//             |> List.exists
+//                 (fun (_, value) ->
+//                     match value with
+//                     | Number n -> n <= xmax && n >= xmin
+//                     | _ -> false)
+//         | _ -> false
+//     | HasBoolValue bool ->
+//         match e with
+//         | Bool b -> bool = b
+//         | List list -> contains list (Bool bool)
+//         | Object object ->
+//             object
+//             |> List.exists
+//                 (fun (_, value) ->
+//                     match value with
+//                     | Bool b -> b = bool
+//                     | _ -> false)
+//         | _ -> false
+//     | HasNull ->
+//         match e with
+//         | None -> true
+//         | List list -> contains list None
+//         | Object object ->
+//             object
+//             |> List.exists
+//                 (fun (_, value) ->
+//                     match value with
+//                     | None -> true
+//                     | _ -> false)
+//         | _ -> false
 
 
 type Description =
@@ -376,15 +450,23 @@ type Path = Description list
 // values.
 
 
+let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
+    let rec innerSelect (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
+        match s with
+        | Match m -> []
+        | Sequence (s, s') ->
+            match innerSelect s e p with
+            | [] -> []
+            | (p', e') :: tail ->
+                match e' with
+                | Object ((name, value) :: tail2) ->
+                    innerSelect s' value (p' @ [ Key name ])
+                    @ innerSelect s' (Object tail2) p'
+                | List l -> []
+                | _ -> innerSelect s' e' p'
+        | _ -> []
 
-
-
-
-
-
-
-
-
+    innerSelect s e []
 
 // 4. Define the function
 //
