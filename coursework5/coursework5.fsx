@@ -319,6 +319,8 @@ let s1: Selector =
 let s2: Selector =
     Sequence(OneOrMore(Match(HasStringValue("xyz"))), Match True)
 
+let s3: Selector = Sequence(Match(Not(HasStringValue "xyz")), OneOrMore(Match True))
+
 // 2. Define the function
 //
 // eval : BExpr -> Ecma -> bool
@@ -342,77 +344,76 @@ let s2: Selector =
 //     | _ -> true
 
 
+// HasStringValue s: evaluates to true on precisely those Ecma that are
+// either Ecma strings with value s, objects that contain a value s,
+// or arrays that contain a value s.
+
+
 let contains (list: 'b list) (item: 'b) : bool = list |> List.contains item
 
-let keyExists (list: (string * 'a) list) (key: string) : bool =
-    list |> List.exists (fun (name, _) -> name = key)
-
-let generalizedMathObject (object: (Name * Ecma) list) (item: 'a) : bool = false
-
-// let rec eval (expression: BExpr) (e: Ecma) : bool =
-//     match expression with
-//     | True -> true
-//     | Not exp -> not (eval exp e)
-//     | And (firstE, secondE) -> (eval firstE e) && (eval secondE e)
-//     | Or (firstE, secondE) -> (eval firstE e) || (eval secondE e)
-//     | HasKey key ->
-//         match e with
-//         | Object object -> keyExists object key
-//         | _ -> false
-//     | HasStringValue string ->
-//         match e with
-//         | Text str -> string = str
-//         | List list -> contains list (Text string)
-//         | Object object ->
-//             object
-//             |> List.exists
-//                 (fun (_, value) ->
-//                     match value with
-//                     | Text s -> s = string
-//                     | _ -> false)
-//         | _ -> false
-//     | HasNumericValueInRange (xmin, xmax) ->
-//         match e with
-//         | Number n -> n <= xmax && n >= xmin
-//         | List list ->
-//             list
-//             |> List.exists
-//                 (fun item ->
-//                     match item with
-//                     | Number n -> n <= xmax && n >= xmin
-//                     | _ -> false)
-//         | Object object ->
-//             object
-//             |> List.exists
-//                 (fun (_, value) ->
-//                     match value with
-//                     | Number n -> n <= xmax && n >= xmin
-//                     | _ -> false)
-//         | _ -> false
-//     | HasBoolValue bool ->
-//         match e with
-//         | Bool b -> bool = b
-//         | List list -> contains list (Bool bool)
-//         | Object object ->
-//             object
-//             |> List.exists
-//                 (fun (_, value) ->
-//                     match value with
-//                     | Bool b -> b = bool
-//                     | _ -> false)
-//         | _ -> false
-//     | HasNull ->
-//         match e with
-//         | None -> true
-//         | List list -> contains list None
-//         | Object object ->
-//             object
-//             |> List.exists
-//                 (fun (_, value) ->
-//                     match value with
-//                     | None -> true
-//                     | _ -> false)
-//         | _ -> false
+let rec eval (expression: BExpr) (e: Ecma) : bool =
+    match expression with
+    | True -> true
+    | Not exp -> not (eval exp e)
+    | And (exp1, exp2) -> (eval exp1 e) && (eval exp2 e)
+    | Or (exp1, exp2) -> (eval exp1 e) || (eval exp2 e)
+    | HasKey key ->
+        match e with
+        | Object object -> List.exists (fun (name, _) -> name = key) object
+        | _ -> false
+    | HasStringValue value -> 
+        match e with 
+        | Text t -> t = value 
+        | Object o -> 
+            List.exists(
+                fun (_, e') -> 
+                    match e' with 
+                    | Text t' -> t' = value 
+                    | _ -> false) o
+        | List l -> contains l (Text value)
+        | _ -> false
+    | HasNumericValueInRange (xmin, xmax) ->
+        match e with
+        | Number n -> n <= xmax && n >= xmin
+        | List list ->
+            list
+            |> List.exists
+                (fun item ->
+                    match item with
+                    | Number n -> n <= xmax && n >= xmin
+                    | _ -> false)
+        | Object object ->
+            object
+            |> List.exists
+                (fun (_, e') ->
+                    match e' with
+                    | Number n -> n <= xmax && n >= xmin
+                    | _ -> false)
+        | _ -> false
+    | HasBoolValue bool ->
+        match e with
+        | Bool b -> b = bool
+        | List list -> contains list (Bool bool)
+        | Object object ->
+            object
+            |> List.exists
+                (fun (_, e') ->
+                    match e' with
+                    | Bool b -> b = bool
+                    | _ -> false)
+        | _ -> false
+    | HasNull ->
+        match e with
+        | None -> true
+        | List list -> contains list None
+        | Object object ->
+            object
+            |> List.exists
+                (fun (_, e') ->
+                    match e' with
+                    | None -> true
+                    | _ -> false)
+        | _ -> false
 
 
 type Description =
@@ -449,24 +450,102 @@ type Path = Description list
 // compute a (Path * Ecma) list. In this case we also consider child
 // values.
 
+// let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
+//     let rec innerSelect (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
+//         match s with
+//         | Match m -> if (eval m e) then [ [], e ] else []
+//         | Sequence (s, s') ->
+//             innerSelect s e p
+//             |> List.fold
+//                 (fun state (p', e') ->
+//                     match e' with
+//                     | Object ((name, value) :: tail2) ->
+//                         state
+//                         @ innerSelect s' value (p' @ [ Key name ])
+//                           @ innerSelect s' (Object tail2) p'
+//                     | List (head :: tail2) ->
+//                         state
+//                         @ innerSelect s' head p'
+//                           @ innerSelect s' (List tail2) p'
+//                     | _ -> innerSelect s' e' p')
+//                 []
+//         // match  with
+//         // | [] -> []
+//         // | (p', e') :: tail ->
+//         //     // match e' with
+//         //     // | Object ((name, value) :: tail2) ->
+//         //     //     innerSelect s' value (p' @ [ Key name ])
+//         //     //     @ innerSelect s' (Object tail2) p'
+//         //     // | List (head :: tail2) ->
+//         //     //     innerSelect s' head p'
+//         //     //     @ innerSelect s' (List tail2) p'
+//         //     // | _ -> innerSelect s' e' p'
+//         | _ -> []
+
+//     innerSelect s e []
 
 let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
-    let rec innerSelect (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
+    let rec selectInner (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
         match s with
-        | Match m -> []
+        | Match expr -> if (eval expr e) then [ p, e ] else []
         | Sequence (s, s') ->
-            match innerSelect s e p with
+            let x = selectInner s e p
+            match x with
             | [] -> []
-            | (p', e') :: tail ->
-                match e' with
-                | Object ((name, value) :: tail2) ->
-                    innerSelect s' value (p' @ [ Key name ])
-                    @ innerSelect s' (Object tail2) p'
-                | List l -> []
-                | _ -> innerSelect s' e' p'
-        | _ -> []
+            | arr ->
+                arr
+                |> List.fold
+                    (fun resultList (p', e') ->
+                        resultList
+                        @ match e' with
+                          | Object o ->
+                              o
+                              |> List.fold (fun acc (key, value) -> acc @ (selectInner s' value (p' @ [ Key(key) ]))) []
 
-    innerSelect s e []
+                          | List arr ->
+                              fst(arr
+                                  |> List.fold (fun (pole, i) el ->
+                                                  (pole @ (selectInner s' el ( p' @ [ Index(i) ])), i + 1)
+                                               ) ([], 0)
+                              )
+                          | _ -> selectInner s' e' p'
+                      ) []
+
+
+        | OneOrMore s -> 
+            let x = selectInner s e p
+            match x with
+            | [] -> []
+            | arr ->
+                arr
+                |> List.fold
+                
+                    (fun resultList (p', e') ->
+                        resultList
+                        @ match e' with
+                          | Object o ->
+                              o
+                              |> List.fold (fun acc (key, value) -> acc @ (selectInner s value (p' @ [ Key(key) ]))) []
+
+                          | List arr ->
+                              fst(arr
+                                  |> List.fold (fun (pole, i) el ->
+                                                  (pole @ (selectInner s el ( p' @ [ Index(i) ])), i + 1)
+                                               ) ([], 0)
+                              )
+                          | _ -> selectInner s e' p'
+                      ) x
+    selectInner s e []
+
+let e =
+    Object([ "a", Number 1.0; "b", Bool false ])
+
+let s =
+    Sequence(Match(HasKey "a"), Match(HasBoolValue false))
+
+let sel = select s e
+
+printfn "%A" sel
 
 // 4. Define the function
 //
@@ -484,11 +563,39 @@ let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
 // for the values selected by s, the string values and numeric values
 // of that value have been updated according to the functions su and nu.
 
+let suFun (s: string) = "abc"
+let nuFun (n: float) = 0.5;
+
+let rec updateEcma (su: string -> string) (nu: float -> float) (e: Ecma): Ecma = 
+    match e with
+    | Object o -> Object(List.map(fun (name, e') -> (name, updateEcma su nu e')) o)
+    | List l -> List(List.map(fun e' -> updateEcma su nu e') l)
+    | Text t -> Text (su t)
+    | Number n -> Number (nu n)
+    | _ -> e
+
+let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
+    let path = select s e
+    
+    e
 
 
+    // let path = select s e
+    // e
+    // match s with
+    // | Match m -> if eval m e then updateEcma su nu e else e
+    // | Sequence (s, s') -> e
+    // | OneOrMore s -> e
 
+let objE =
+    Object([ "a", Number 1.0; "b", Bool false ])
 
+let objE2 =
+    Object([ "a", Number 1.0; "b", Bool false; "c", Object(["d", Number 1.5; "x", List([Bool true; Number 2.0])]) ])
 
+let z = update suFun nuFun (Match (HasKey "a")) objE2
+
+printfn "%A" z
 
 
 // 5. Define the function
