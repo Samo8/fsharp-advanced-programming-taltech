@@ -85,8 +85,8 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
     | _ -> List.rev acc
   createTwoTuplesOfListInner a list []
 
-let yy = createTwoTuplesOfList 1 [1..10]
-printfn "%A" yy
+// let yy = createTwoTuplesOfList 1 [1..10]
+// printfn "%A" yy
 
 (*
   Task 3:
@@ -101,6 +101,17 @@ printfn "%A" yy
   Test yourself if this implementation appears to be tail recursive.
 *)
 
+let rec createTwoTuplesOfListFold (a: 'a) (list: 'a list): ('a * 'a) list =
+  List.fold(fun (state, head::tail) value -> (state @ [(head, value)], tail)) ([], List.tail list) list |> fst
+  // let rec createTwoTuplesOfListFoldInner (a: 'a) (list: 'a list) (acc: ('a * 'a) list): ('a * 'a) list =
+  //   match list with
+  //   | x::y::xs' -> createTwoTuplesOfListFoldInner a xs' (List.fold(fun state value -> state @ [(value, value)]) acc [x; y])
+  //   | _ -> acc
+  // createTwoTuplesOfListFoldInner a list []
+  // List.fold(fun state value -> state) [] list
+
+// let xx = createTwoTuplesOfListFold 1 [1..10]
+// printfn "%A" xx
 
 (*
   Task 4:
@@ -124,3 +135,20 @@ type 'a Tr =
   | Lf   of 'a
   | Br of 'a Tr * 'a Tr
 
+
+let medianAndAverageInTree (tree: int Tr): int * float =
+  let rec medianAndAverageInTreeInner (tr: int Tr) (f) (list: int list) =
+    match tr with
+    | Lf l -> f (1, l, l::list)
+    | Br (tl, tr) -> 
+      medianAndAverageInTreeInner tl (fun (countL, valL, listL) -> 
+      medianAndAverageInTreeInner tr (fun (countR, valR, listR) -> 
+      f((countL + countR, valL + valR, listL @ listR))) list ) list
+  let (count, sum, elements) =  medianAndAverageInTreeInner tree id []
+  let ll = List.sort (elements)
+  (ll.Item(ll.Length/2), float(sum) / float(count))
+
+let treeee = Br(Br(Lf 1, Lf 3), Br(Lf 2, Lf 5))
+let sk = medianAndAverageInTree treeee
+
+printfn "%A" sk
