@@ -101,26 +101,23 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
   Test yourself if this implementation appears to be tail recursive.
 *)
 
-let first (a, _, _) = a
-
 let createTwoTuplesOfListFold (a: 'a) (list: 'a list) : ('a * 'a) list =
     let newList =
         if list.Length % 2 = 0 then
             list
         else
             list @ [ a ]
+    
+    List.foldBack
+        (fun item (result: ('a * 'a) list, buffer: 'a Option) ->
+            match buffer with
+            | None -> (result, Some item)
+            | _ -> ((item, buffer.Value)::result, None))
+        newList ([], None)
+    |> fst
 
-    newList
-    |> List.fold
-        (fun (result, decision, buffer: 'a Option) item ->
-            match decision with
-            | true -> ((buffer.Value, item)::result, false, None)
-            | false -> (result, true, Some item))
-        ([], false, None)
-    |> first |> List.rev
 
-
-// let xx = createTwoTuplesOfListFold 1 [1..1000000]
+// let xx = createTwoTuplesOfListFold 1 [1..9]
 // printfn "%A" xx
 
 (*
