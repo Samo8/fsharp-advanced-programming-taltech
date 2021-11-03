@@ -451,40 +451,6 @@ type Path = Description list
 // compute a (Path * Ecma) list. In this case we also consider child
 // values.
 
-// let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
-//     let rec innerSelect (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
-//         match s with
-//         | Match m -> if (eval m e) then [ [], e ] else []
-//         | Sequence (s, s') ->
-//             innerSelect s e p
-//             |> List.fold
-//                 (fun state (p', e') ->
-//                     match e' with
-//                     | Object ((name, value) :: tail2) ->
-//                         state
-//                         @ innerSelect s' value (p' @ [ Key name ])
-//                           @ innerSelect s' (Object tail2) p'
-//                     | List (head :: tail2) ->
-//                         state
-//                         @ innerSelect s' head p'
-//                           @ innerSelect s' (List tail2) p'
-//                     | _ -> innerSelect s' e' p')
-//                 []
-//         // match  with
-//         // | [] -> []
-//         // | (p', e') :: tail ->
-//         //     // match e' with
-//         //     // | Object ((name, value) :: tail2) ->
-//         //     //     innerSelect s' value (p' @ [ Key name ])
-//         //     //     @ innerSelect s' (Object tail2) p'
-//         //     // | List (head :: tail2) ->
-//         //     //     innerSelect s' head p'
-//         //     //     @ innerSelect s' (List tail2) p'
-//         //     // | _ -> innerSelect s' e' p'
-//         | _ -> []
-
-//     innerSelect s e []
-
 let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
     let rec selectInner (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
         match s with
@@ -575,28 +541,47 @@ let rec updateEcma (su: string -> string) (nu: float -> float) (e: Ecma): Ecma =
     | Number n -> Number (nu n)
     | _ -> e
 
-let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
-    let path = select s e
-    
-    e
+let concatObjects (o1:Ecma) (o2:Ecma) : Ecma =
+  match o1, o2 with
+  | Object(x), Object(y) -> Object(x@y)
+  | _ -> printfn "o1:%A\no2:%A" o1 o2
+         failwith "Expected to obtain 2 objects"
 
+let rec innerUpdate (su: string -> string) (nu: float -> float) (e:Ecma) (path:Path) (ecmaToMatch:Ecma) : Ecma =
+  match path with
+  | [] -> if e = ecmaToMatch then updateEcma su nu e else e
+  | [x] -> match e with
+            | Object((key,value)::xs) -> if Key(key) = x && value = ecmaToMatch
+                                         then concatObjects (Object([key, (updateEcma su nu value)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+                                         else concatObjects (Object([key, value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+            | Object([]) -> Object([])
+            | List arr -> match x with
+                            | Index i -> List(arr |> List.mapi (fun idx el -> if i = idx then updateEcma su nu el else el))
+                            | Key k -> failwith "Key in list"
+            | _ -> e
+  | h::tail ->
+    match e with
+    | Object([]) -> Object([])
+    | Object((key,value)::xs) ->
+        if Key(key) = h
+        then concatObjects (Object([key, (innerUpdate su nu value tail ecmaToMatch)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+        else concatObjects (Object([key,value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+    | List arr -> List(arr |> List.mapi (fun i el -> if Index(i) = h then innerUpdate su nu el tail ecmaToMatch else el))
+    | _ -> failwith "Fail"
 
-    // let path = select s e
-    // e
-    // match s with
-    // | Match m -> if eval m e then updateEcma su nu e else e
-    // | Sequence (s, s') -> e
-    // | OneOrMore s -> e
+let update (su:(string -> string)) (nu:(float -> float)) (s:Selector) (e:Ecma) : Ecma =
+  let pathEcmaList = select s e
+  pathEcmaList |> List.fold (fun accumulatedE (path, e') -> innerUpdate su nu accumulatedE path e') e
 
 let objE =
     Object([ "a", Number 1.0; "b", Bool false ])
 
 let objE2 =
-    Object([ "a", Number 1.0; "b", Bool false; "c", Object(["d", Number 1.5; "x", List([Bool true; Number 2.0])]) ])
+    Object([ "a", Number 1.0; "b", Bool false; "c", Object(["d", Number 1.5; "x", List([Bool true; Number 2.0])]); "z", Text "abcdef" ])
 
 let z = update suFun nuFun (Match (HasKey "a")) objE2
 
-printfn "%A" z
+// printfn "%A" z
 
 
 // 5. Define the function
@@ -643,13 +628,21 @@ printfn "%A" z
 // These functions should not be defined recursively; define them in
 // terms of update.
 
+let toZero (x: float) (s: Selector) (e: Ecma): Ecma =
+    let nu (n: float) = if n >= -x && n <=x then 0.0 else n
+    update id nu s e
 
+let ccc = toZero 1.2 (Match (HasKey "a")) objE2
+printfn "%A" ccc
 
+let truncate (n: int) (s: Selector) (e: Ecma): Ecma =
+    let su (s: string) = if s.Length <= n then s else s.[..n-1]
+    update su id s e
 
+let ddd = truncate 2 (Match (HasKey "a")) objE2
+printfn "%A" ddd
 
-
-
-
+ 
 // 7. Using the function update, define the function
 //
 //   mapEcma : (string -> string) -> (float -> float) -> Ecma -> Ecma
