@@ -85,6 +85,8 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
     | _ -> List.rev acc
   createTwoTuplesOfListInner a list []
 
+  
+
 // let yy = createTwoTuplesOfList 1 [1..10]
 // printfn "%A" yy
 
