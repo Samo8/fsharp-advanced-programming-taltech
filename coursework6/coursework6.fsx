@@ -53,10 +53,10 @@
 
 let rec pHoldsForAllSequentialElements (p: int -> int -> bool) (xs: int list): bool =
   match xs with
-  | x::y::xs' when p x y -> 
+  | x::(y::xs' as rest) when p x y -> 
       match xs' with
       | [] -> true
-      | _ -> pHoldsForAllSequentialElements p (y::xs')
+      | _ -> pHoldsForAllSequentialElements p (rest)
   | _ -> false
 
 // let predicateFun a b = a + b = a + b
