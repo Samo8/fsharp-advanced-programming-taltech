@@ -320,7 +320,7 @@ let s1: Selector =
 let s2: Selector =
     Sequence(OneOrMore(Match(HasStringValue("xyz"))), Match True)
 
-let s3: Selector = Sequence(Match(Not(HasStringValue "xyz")), OneOrMore(Match True))
+let s3: Selector = Sequence(Match(Not(HasStringValue "xyz")), Match True)
 
 // 2. Define the function
 //
