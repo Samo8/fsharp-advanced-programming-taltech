@@ -85,9 +85,7 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
     | _ -> List.rev acc
   createTwoTuplesOfListInner a list []
 
-
-
-// let yy = createTwoTuplesOfList 1 [1..10]
+// let yy = createTwoTuplesOfList 1 [1..1000000]
 // printfn "%A" yy
 
 (*
@@ -106,24 +104,24 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
 let first (a, _, _) = a
 
 let createTwoTuplesOfListFold (a: 'a) (list: 'a list) : ('a * 'a) list =
-    let newInput =
+    let newList =
         if list.Length % 2 = 0 then
             list
         else
             list @ [ a ]
 
-    newInput
+    newList
     |> List.fold
         (fun (result, decision, buffer: 'a Option) item ->
             match decision with
-            | true -> (result @ [ (buffer.Value, item) ], false, None)
+            | true -> ((buffer.Value, item)::result, false, None)
             | false -> (result, true, Some item))
         ([], false, None)
-    |> first
+    |> first |> List.rev
 
 
-let xx = createTwoTuplesOfListFold 1 [1..9]
-printfn "%A" xx
+// let xx = createTwoTuplesOfListFold 1 [1..1000000]
+// printfn "%A" xx
 
 (*
   Task 4:
