@@ -59,8 +59,8 @@ let rec pHoldsForAllSequentialElements (p: int -> int -> bool) (xs: int list): b
       | _ -> pHoldsForAllSequentialElements p (y::xs')
   | _ -> false
 
-let predicateFun a b = a + b = a + b
-let xsList = [1;2]
+// let predicateFun a b = a + b = a + b
+// let xsList = [1;2]
 
 // let z = pHoldsForAllSequentialElements predicateFun xsList
 // printfn "%b" z
@@ -85,7 +85,7 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
     | _ -> List.rev acc
   createTwoTuplesOfListInner a list []
 
-  
+
 
 // let yy = createTwoTuplesOfList 1 [1..10]
 // printfn "%A" yy
@@ -150,7 +150,7 @@ let medianAndAverageInTree (tree: int Tr): int * float =
   let ll = List.sort (elements)
   (ll.Item(ll.Length/2), float(sum) / float(count))
 
-let treeee = Br(Br(Lf 1, Lf 3), Br(Lf 2, Lf 5))
-let sk = medianAndAverageInTree treeee
+// let treeee = Br(Br(Lf 1, Lf 3), Br(Lf 2, Lf 5))
+// let sk = medianAndAverageInTree treeee
 
-printfn "%A" sk
+// printfn "%A" sk
