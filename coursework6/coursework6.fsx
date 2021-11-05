@@ -144,18 +144,18 @@ type 'a Tr =
 
 
 let medianAndAverageInTree (tree: int Tr): int * float =
-  let rec medianAndAverageInTreeInner (tr: int Tr) (f) (foundMedian: bool) (median: int) =
+  let rec medianAndAverageInTreeInner (tr: int Tr) (f) =
     match tr with
-    | Lf l -> f (1, l, foundMedian, if foundMedian then l else median)
+    | Lf l -> f (1, l, [l])
     | Br (tl, tr) -> 
-      medianAndAverageInTreeInner tl (fun (countL, valL, foundMedL, medL) -> 
-      printfn "%A" countL
-      medianAndAverageInTreeInner tr (fun (countR, valR, foundMedR, medR) -> 
-      f((countL + countR, valL + valR, (countL - countR = 0), medR))) foundMedL medL ) foundMedian median
-  let (count, sum, _, med) =  medianAndAverageInTreeInner tree id false 0
-  (med, float(sum) / float(count))
+      medianAndAverageInTreeInner tl (fun (countL, valL, listL) -> 
+      medianAndAverageInTreeInner tr (fun (countR, valR, listR) -> 
+      f(countL + countR, valL + valR, listL @ listR)))
+  let (count, sum, list) =  medianAndAverageInTreeInner tree id
+  let median = list |> List.item((count - 1) / 2)
+  (median, float(sum) / float(count))
 
-// let treeee = Br(Br(Lf 1, Lf 3), Br(Lf 2, Lf 5))
+// let treeee = Br(Br(Lf 1, Lf 2), Br(Lf 3, Lf 4))
 // let sk = medianAndAverageInTree treeee
 
 // printfn "%A" sk

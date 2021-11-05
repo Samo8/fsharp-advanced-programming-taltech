@@ -512,7 +512,7 @@ let s =
 
 let sel = select s e
 
-printfn "%A" sel
+// printfn "%A" sel
 
 // 4. Define the function
 //
@@ -530,13 +530,20 @@ printfn "%A" sel
 // for the values selected by s, the string values and numeric values
 // of that value have been updated according to the functions su and nu.
 
-let suFun (s: string) = "abc"
+let suFun (s: string) = "ZMENA"
 let nuFun (n: float) = 0.5;
 
-let rec updateEcma (su: string -> string) (nu: float -> float) (e: Ecma): Ecma = 
+let updateTextOrNumber (su: string -> string) (nu: float -> float) (e: Ecma) : Ecma =
+  match e with
+    | Text t -> Text (su t)
+    | Number n -> Number (nu n)
+    | _ -> e
+
+let updateEcma (su: string -> string) (nu: float -> float) (e: Ecma): Ecma = 
+    // printfn "updatuju %A" e
     match e with
-    | Object o -> Object(List.map(fun (name, e') -> (name, updateEcma su nu e')) o)
-    | List l -> List(List.map(fun e' -> updateEcma su nu e') l)
+    | Object o -> Object(List.map(fun (name, e') -> (name, updateTextOrNumber su nu e')) o)
+    | List l -> List(List.map(fun e' -> updateTextOrNumber su nu e') l)
     | Text t -> Text (su t)
     | Number n -> Number (nu n)
     | _ -> e
@@ -569,17 +576,60 @@ let rec innerUpdate (su: string -> string) (nu: float -> float) (e:Ecma) (path:P
     | List arr -> List(arr |> List.mapi (fun i el -> if Index(i) = h then innerUpdate su nu el tail ecmaToMatch else el))
     | _ -> failwith "Fail"
 
-let update (su:(string -> string)) (nu:(float -> float)) (s:Selector) (e:Ecma) : Ecma =
+let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
   let pathEcmaList = select s e
   pathEcmaList |> List.fold (fun accumulatedE (path, e') -> innerUpdate su nu accumulatedE path e') e
+
+let rec updateInnerNew (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma) (doUpdate: bool): Ecma * bool =
+  match s with
+    | Match n -> 
+        printfn "Match: %A, %A, %A" n e doUpdate
+        if eval n e && doUpdate
+        then (updateEcma su nu e), true
+        else e, true
+                //  else if doUpdate then e else None
+    | Sequence (s, s') -> let x = updateInnerNew su nu s e false
+                          match fst x with
+                            | Object o -> Object(o |> List.map (fun (key, e') -> (key,  fst (updateInnerNew su nu s' e' true)))), true
+                            | List arr -> List(arr |> List.map (fun e' -> fst(updateInnerNew su nu s' e' true))), true
+                            | _ -> 
+                                printfn "_ branch, x= %A, e=%A" x e 
+                                (updateEcma su nu e), true //printfn "Tady %A" e; updateEcma su nu e
+    | OneOrMore s -> updateInnerNew su nu s e true //updateInner su nu (Sequence (updateInner su nu s e true, OneOrMore s)) e true
+
+let updateNew (su:(string -> string)) (nu:(float -> float)) (s:Selector) (e:Ecma) : Ecma =
+  fst (updateInnerNew su nu s e true)
 
 let objE =
     Object([ "a", Number 1.0; "b", Bool false ])
 
 let objE2 =
-    Object([ "a", Number 1.0; "b", Bool false; "c", Object(["d", Number 1.5; "x", List([Bool true; Number 2.0])]); "z", Text "abcdef" ])
+    Object(["a", Number 1.0; 
+            "b", Bool false;
+            "c", Object([
+                "d", Number 1.5;
+                "x", List([
+                    Bool true; 
+                    Number 2.0
+                    ])
+                ]);
+            "z", Text "abcdef"
+    ])
 
-let z = update suFun nuFun (Match (HasKey "a")) objE2
+let seque = Sequence(Match (Not True), Match True)
+// let seque = Sequence(Match True, Match (HasKey "d"))
+
+// let xxx = select seque objE2
+
+// printfn "%A\n\n" xxx
+
+let updRes =  update suFun nuFun seque objE2
+let updNewRes = updateNew suFun nuFun seque objE2
+
+printfn "Old: \n%A" updRes
+printfn "New: \n%A" updNewRes
+
+if (updRes = updNewRes) then printfn "%s" "TRUE" else printfn "%s" "POZOOOOOOOOOOOOOoooooooooooooooooOOOOOOR"
 
 // printfn "%A" z
 
@@ -633,14 +683,14 @@ let toZero (x: float) (s: Selector) (e: Ecma): Ecma =
     update id nu s e
 
 let ccc = toZero 1.2 (Match (HasKey "a")) objE2
-printfn "%A" ccc
+// printfn "%A" ccc
 
 let truncate (n: int) (s: Selector) (e: Ecma): Ecma =
     let su (s: string) = if s.Length <= n then s else s.[..n-1]
     update su id s e
 
 let ddd = truncate 2 (Match (HasKey "a")) objE2
-printfn "%A" ddd
+// printfn "%A" ddd
 
  
 // 7. Using the function update, define the function
