@@ -554,51 +554,66 @@ let concatObjects (o1:Ecma) (o2:Ecma) : Ecma =
   | _ -> printfn "o1:%A\no2:%A" o1 o2
          failwith "Expected to obtain 2 objects"
 
-let rec innerUpdate (su: string -> string) (nu: float -> float) (e:Ecma) (path:Path) (ecmaToMatch:Ecma) : Ecma =
-  match path with
-  | [] -> if e = ecmaToMatch then updateEcma su nu e else e
-  | [x] -> match e with
-            | Object((key,value)::xs) -> if Key(key) = x && value = ecmaToMatch
-                                         then concatObjects (Object([key, (updateEcma su nu value)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
-                                         else concatObjects (Object([key, value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
-            | Object([]) -> Object([])
-            | List arr -> match x with
-                            | Index i -> List(arr |> List.mapi (fun idx el -> if i = idx then updateEcma su nu el else el))
-                            | Key k -> failwith "Key in list"
-            | _ -> e
-  | h::tail ->
-    match e with
-    | Object([]) -> Object([])
-    | Object((key,value)::xs) ->
-        if Key(key) = h
-        then concatObjects (Object([key, (innerUpdate su nu value tail ecmaToMatch)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
-        else concatObjects (Object([key,value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
-    | List arr -> List(arr |> List.mapi (fun i el -> if Index(i) = h then innerUpdate su nu el tail ecmaToMatch else el))
-    | _ -> failwith "Fail"
+// let rec innerUpdate (su: string -> string) (nu: float -> float) (e:Ecma) (path:Path) (ecmaToMatch:Ecma) : Ecma =
+//   match path with
+//   | [] -> if e = ecmaToMatch then updateEcma su nu e else e
+//   | [x] -> match e with
+//             | Object((key,value)::xs) -> if Key(key) = x && value = ecmaToMatch
+//                                          then concatObjects (Object([key, (updateEcma su nu value)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+//                                          else concatObjects (Object([key, value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+//             | Object([]) -> Object([])
+//             | List arr -> match x with
+//                             | Index i -> List(arr |> List.mapi (fun idx el -> if i = idx then updateEcma su nu el else el))
+//                             | Key k -> failwith "Key in list"
+//             | _ -> e
+//   | h::tail ->
+//     match e with
+//     | Object([]) -> Object([])
+//     | Object((key,value)::xs) ->
+//         if Key(key) = h
+//         then concatObjects (Object([key, (innerUpdate su nu value tail ecmaToMatch)])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+//         else concatObjects (Object([key,value])) (innerUpdate su nu (Object(xs)) path ecmaToMatch)
+//     | List arr -> List(arr |> List.mapi (fun i el -> if Index(i) = h then innerUpdate su nu el tail ecmaToMatch else el))
+//     | _ -> failwith "Fail"
+
+// let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
+//   let pathEcmaList = select s e
+//   pathEcmaList |> List.fold (fun accumulatedE (path, e') -> innerUpdate su nu accumulatedE path e') e
+
+let rec updateInner (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma) (doUpdate: bool) : Ecma * bool =
+    match s with
+    | Match n ->
+        let evalRes = eval n e
+        if evalRes && doUpdate then (updateEcma su nu e, true) else (e, evalRes)
+    | Sequence (s, s') ->
+        let x = updateInner su nu s e false
+
+        if not (snd x)  then
+            e, false
+        else
+            match fst (x) with
+            | Object o ->
+                Object(o|> List.map (fun (key, e') -> (key, fst (updateInner su nu s' e' true)))), true
+            | List arr ->
+                List(arr|> List.map (fun e' -> fst (updateInner su nu s' e' true))), true
+            | _ -> e, true
+    | OneOrMore s -> updateInner su nu s e true
+
+// let rec updateInnerNew (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma) (doUpdate: bool): Ecma * bool =
+//   match s with
+//     | Match n -> 
+//         if eval n e && doUpdate
+//         then (updateEcma su nu e), true
+//         else e, true
+//     | Sequence (s, s') -> let x = updateInnerNew su nu s e false
+//                           match fst x with
+//                             | Object o -> Object(o |> List.map (fun (key, e') -> (key,  fst (updateInnerNew su nu s' e' true)))), true
+//                             | List arr -> List(arr |> List.map (fun e' -> fst(updateInnerNew su nu s' e' true))), true
+//                             | _ -> (updateEcma su nu e), true
+//     | OneOrMore s -> updateInnerNew su nu s e true
 
 let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
-  let pathEcmaList = select s e
-  pathEcmaList |> List.fold (fun accumulatedE (path, e') -> innerUpdate su nu accumulatedE path e') e
-
-let rec updateInnerNew (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma) (doUpdate: bool): Ecma * bool =
-  match s with
-    | Match n -> 
-        printfn "Match: %A, %A, %A" n e doUpdate
-        if eval n e && doUpdate
-        then (updateEcma su nu e), true
-        else e, true
-                //  else if doUpdate then e else None
-    | Sequence (s, s') -> let x = updateInnerNew su nu s e false
-                          match fst x with
-                            | Object o -> Object(o |> List.map (fun (key, e') -> (key,  fst (updateInnerNew su nu s' e' true)))), true
-                            | List arr -> List(arr |> List.map (fun e' -> fst(updateInnerNew su nu s' e' true))), true
-                            | _ -> 
-                                printfn "_ branch, x= %A, e=%A" x e 
-                                (updateEcma su nu e), true //printfn "Tady %A" e; updateEcma su nu e
-    | OneOrMore s -> updateInnerNew su nu s e true //updateInner su nu (Sequence (updateInner su nu s e true, OneOrMore s)) e true
-
-let updateNew (su:(string -> string)) (nu:(float -> float)) (s:Selector) (e:Ecma) : Ecma =
-  fst (updateInnerNew su nu s e true)
+  fst (updateInner su nu s e true)
 
 let objE =
     Object([ "a", Number 1.0; "b", Bool false ])
@@ -616,20 +631,26 @@ let objE2 =
             "z", Text "abcdef"
     ])
 
-let seque = Sequence(Match (Not True), Match True)
-// let seque = Sequence(Match True, Match (HasKey "d"))
+// let objE3 = List([Number 1.0; Object(["c", Text "asdfaf"])])
+// let objE3 = List([Number 1.0; Object(["a", None; "a", List([])])])
 
-// let xxx = select seque objE2
+// // let seque = Sequence(Match (Not True), Match True)
+// // let seque = Sequence(Match True, Match (HasKey "c"))
+// // let seque = Sequence(Match True, Match (HasNumericValueInRange (0.1, 2.5)))
+// // let seque = Sequence(Match True, Match (HasNumericValueInRange (2.0, 2.5)))
+// let seque = Sequence(Match (Not True), Match (Not True))
 
-// printfn "%A\n\n" xxx
+// // let xxx = select seque objE2
 
-let updRes =  update suFun nuFun seque objE2
-let updNewRes = updateNew suFun nuFun seque objE2
+// // printfn "%A\n\n" xxx
 
-printfn "Old: \n%A" updRes
-printfn "New: \n%A" updNewRes
+// let updRes =  update suFun nuFun seque objE3
+// let updNewRes = updateNew suFun nuFun seque objE3
 
-if (updRes = updNewRes) then printfn "%s" "TRUE" else printfn "%s" "POZOOOOOOOOOOOOOoooooooooooooooooOOOOOOR"
+// printfn "Old: \n%A" updRes
+// printfn "New: \n%A" updNewRes
+
+// if (updRes = updNewRes) then printfn "%s" "TRUE" else printfn "%s" "POZOOOOOOOOOOOOOoooooooooooooooooOOOOOOR"
 
 // printfn "%A" z
 
