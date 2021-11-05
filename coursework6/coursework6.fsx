@@ -154,8 +154,3 @@ let medianAndAverageInTree (tree: int Tr): int * float =
   let (count, sum, list) =  medianAndAverageInTreeInner tree id
   let median = list |> List.item((count - 1) / 2)
   (median, float(sum) / float(count))
-
-// let treeee = Br(Br(Lf 1, Lf 2), Br(Lf 3, Lf 4))
-// let sk = medianAndAverageInTree treeee
-
-// printfn "%A" sk
