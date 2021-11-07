@@ -541,7 +541,7 @@ let rec updateInner (su: string -> string) (nu: float -> float) (s: Selector) (e
 
 let update (su: string -> string) (nu: float -> float) (s: Selector) (e: Ecma): Ecma =
     let x = updateInner su nu s e true
-    if not (snd x) then e else fst x
+    fst x
 
 // let objE =
 //     Object([ "a", Number 1.0; "b", Bool false ])
