@@ -455,37 +455,26 @@ let rec select (s: Selector) (e: Ecma) : (Path * Ecma) list =
     let rec selectInner (s: Selector) (e: Ecma) (p: Path) : (Path * Ecma) list =
         match s with
         | Match expr -> if (eval expr e) then [ p, e ] else []
-        | Sequence (s, s') ->
-            let x = selectInner s e p
+        | Sequence (seq, seq') ->
+            let x = selectInner seq e p
             match x with
             | [] -> []
             | arr ->
                 arr
                 |> List.fold
-                    (fun resultList (p', e') ->
-                        resultList
+                    (fun resultList (p', e') -> 
+                    resultList
                         @ match e' with
-                          | Object o ->
-                              o
-                              |> List.fold (fun acc (key, value) -> acc @ (selectInner s' value (p' @ [ Key(key) ]))) []
-
-                          | List arr ->
-                              fst(arr
-                                  |> List.fold (fun (pole, i) el ->
-                                                  (pole @ (selectInner s' el ( p' @ [ Index(i) ])), i + 1)
-                                               ) ([], 0)
-                              )
-                          | _ -> selectInner s' e' p'
+                          | Object o -> o |> List.fold (fun acc (key, value) -> acc @ (selectInner seq' value (p' @ [ Key(key) ]))) []
+                          | List arr -> fst(arr|> List.fold (fun (pole, i) el -> (pole @ (selectInner seq' el ( p' @ [ Index(i) ])), i + 1)) ([], 0))
+                          | _ -> selectInner seq' e' p'
                       ) []
-
-
-        | OneOrMore s -> 
-            let x = selectInner s e p
-            x
-            @ match e with
-              | Object _ -> selectInner (Sequence(s, OneOrMore s)) e p
-              | List _ -> selectInner (Sequence(s, OneOrMore s)) e p
-              | _ -> []
+        | OneOrMore seq -> 
+            let res = selectInner seq e p
+            res @ match e with
+                  | Object _ -> selectInner (Sequence(seq, OneOrMore seq)) e p
+                  | List _ -> selectInner (Sequence(seq, OneOrMore seq)) e p
+                  | _ -> []
     selectInner s e []
 
 // let e =
