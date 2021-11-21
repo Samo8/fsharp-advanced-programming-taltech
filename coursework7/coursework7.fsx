@@ -38,7 +38,7 @@
 *)
 
 #if INTERACTIVE 
-//#r    "FsCheck.dll" // in .Net Framework and .Net core versions prior to 5.0
+// #r    "FsCheck.dll" // in .Net Framework and .Net core versions prior to 5.0
 #r    "nuget: FsCheck, Version=2.14.3" // You can also use nuget directly with F# 5 and 6.
 #load "FileSystem.fs"
 #endif
@@ -47,7 +47,28 @@ open FsCheck
 
 open FileSystem
 
+let fsObject = 
+   { name = "Taltech"
+     children = [
+        { name = "FSharp"
+          children = [
+             { name = "FSharp"
+               children = [] };
+             { name = "FSharp2"
+               children = [] };
+             { name = "FSharp"
+               children = [] }
+          ] }] }
 
+let fsEmptyOject: FileSystem.FsTree = 
+   { name = ""
+     children = []}
+   
+// let isEmptyTest = FileSystem.isEmpty fsObject
+// printfn "%b" isEmptyTest
+
+let pathList = FileSystem.show fsObject
+printfn "%A" pathList
 
 (*
    Question 1
@@ -73,8 +94,21 @@ open FileSystem
    once.
 *)
 
+let pathWf (path: FileSystem.Path): bool =  not (path |> List.isEmpty) && not (path |> List.contains(""))
 
+let rec fsTreeWf (fs: FileSystem.FsTree) : bool =
+   if fs.name = ""
+   then false
+   else match fs.children with
+         | [] -> true
+         | children -> if (children |> List.map (fun child -> child.name) |> List.distinct).Length <> children.Length
+                       then false
+                       else let filteredItems = children |> List.filter(fun el -> fsTreeWf el)
+                            filteredItems.Length = children.Length
 
+let isObjectGood = fsTreeWf fsObject
+
+printfn "%b" isObjectGood
 
 (*
    Question 2
@@ -94,7 +128,7 @@ open FileSystem
    property?
 *)
 
-
+let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> lazy fsTreeWf (create p fs)
 
 
 
@@ -127,7 +161,7 @@ open FileSystem
 *)
 
 
-
+// let wfTrees: Gen<FsTree> = null
 
 
 
@@ -150,7 +184,7 @@ open FileSystem
    generators (meaning that p and fs are well-formed).
 *)
 
-
+let deleteIsWellFormed (p: Path) (fs: FsTree): bool = fsTreeWf (delete p fs)
 
 
 
@@ -175,7 +209,7 @@ open FileSystem
    generators (meaning that p and fs are well-formed).
 *)
 
-
+let createCreates (p: Path) (fs: FsTree): bool = show (create p fs) |> List.filter(fun path -> path = p) |> List.length = 1
 
 
 
@@ -199,7 +233,7 @@ open FileSystem
    generators (meaning that p and fs are well-formed).
 *)
 
-
+let deleteDeletes (p: Path) (fs: FsTree): bool = show (delete p fs) |> List.contains(p) = false
 
 
 
@@ -221,7 +255,7 @@ open FileSystem
    generators (meaning that fs is well-formed).
 *)
 
-
+let showShowsEverything (fs: FsTree): bool = isEmpty (show fs |> List.fold(fun state path -> delete path state) fs)
 
 
 (*
@@ -248,3 +282,12 @@ open FileSystem
    You may assume that this property is only used with "well-formed"
    generators (meaning that fs, p1 and p2 are well-formed).
 *)
+
+let rec isNotPrefix (p1:Path) (p2:Path) : bool =
+   match p1, p2 with
+   | [], [] -> false
+   | x::xs, y::ys -> if x = y then isNotPrefix xs ys else true
+   | [], _::_ -> false
+   | _::_, [] -> true
+
+let createAndDelete (fs: FsTree) (p1: Path) (p2: Path): Property = isNotPrefix p1 p2 ==> lazy List.contains (show (delete p1 (create p2 (create p1 fs))))
