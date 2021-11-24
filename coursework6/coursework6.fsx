@@ -102,22 +102,23 @@ let rec createTwoTuplesOfList (a: 'a) (list: 'a list): ('a * 'a) list =
 *)
 
 let createTwoTuplesOfListFold (a: 'a) (list: 'a list) : ('a * 'a) list =
-    let newList =
-        if list.Length % 2 = 0 then
-            list
-        else
-            list @ [ a ]
-    
-    List.foldBack
-        (fun item (result: ('a * 'a) list, buffer: 'a Option) ->
-            match buffer with
-            | None -> (result, Some item)
-            | _ -> ((item, buffer.Value)::result, None))
-        newList ([], None)
-    |> fst
+    let subResult = 
+      list |> List.fold
+        (fun (result: ('a * 'a) list, buffer: 'a Option) item ->
+          match buffer with
+          | None -> (result, Some item)
+          | _ -> ((buffer.Value, item)::result, None))
+        ([], None)
+
+    let result = 
+      match snd subResult with
+        | Some s -> (s, a)::fst subResult
+        | None -> fst subResult
+
+    List.rev result
 
 
-// let xx = createTwoTuplesOfListFold 1 [1..9]
+// let xx = createTwoTuplesOfListFold 100 [1..3]
 // printfn "%A" xx
 
 (*
