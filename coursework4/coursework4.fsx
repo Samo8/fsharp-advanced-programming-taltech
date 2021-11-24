@@ -302,15 +302,14 @@ type Path = Name list
 // Note that the empty list denotes the path to the root object.
 
 
-let rec listPaths (ecma: Ecma) : Path list =
-    let rec paths (e: Ecma) (prefix: Path) : Path list =
+let rec listPaths (ecma: Ecma): Path list =
+    let rec paths (e: Ecma) (path: Path): Path list =
         match e with
-        | Object ((name, value) :: tail) ->
-            let newPrefix = prefix @ [ name ]
-
-            [ newPrefix ]
-            @ paths value newPrefix @ paths (Object tail) prefix
-        | List (head :: tail) -> paths head prefix @ paths (List tail) prefix
+        | Object o -> 
+            o |> List.collect(fun (name, value) -> 
+              let newPath = path @ [name]
+              [newPath] @ paths value newPath)
+        | List l -> l |> List.collect(fun x -> paths x path)
         | _ -> []
 
     [] :: paths ecma []
@@ -355,37 +354,16 @@ let rec listPaths (ecma: Ecma) : Path list =
 
 let rec show (ecma: Ecma) =
     match ecma with
-    | Object o -> objectToJson o
-    | List l -> listToJson l
+    | Object o -> "{" + (String.concat "," (o |> List.map(fun (name, e) -> show (Text name) + ":" + show e))) + "}"
+    | List l -> "[" + String.concat "," (l |> List.map(fun item -> show item)) + "]"
     | Bool b -> b.ToString().ToLower()
     | Number n -> n.ToString()
     | Text t -> "\"" + t + "\""
     | None -> "null"
 
-and objectToJson (object: list<Name * Ecma>) =
-    match object with
-    | [] -> "{}"
-    | _ ->
-        "{\""
-        + fst object.Head
-        + "\":"
-        + show (snd (object.Head))
-        + (object.Tail
-           |> List.fold (fun res (name, e) -> res + "," + "\"" + name + "\":" + show e) "")
-        + "}"
-
-and listToJson (list: list<Ecma>) =
-    match list with
-    | [] -> "[]"
-    | _ ->
-        "["
-        + show (list.Head)
-        + (list.Tail
-           |> List.fold (fun res e -> res + "," + show e) "")
-        + "]"
-
-// let x =
-//     Object([ ("text", List([ Number 1.0; Bool false ])) ])
+// let x = Object([ ("text", List([ Number 1.0; Bool false ])); ("text2222", List([ Number 1.0; Bool false ])); ("text333", List([ Number 1.0; Bool false ])); ("xx", Object([])) ])
+// let x = List([Number 1.0; Bool false; Number 3.0])
+   
 
 // printfn "%s" (show x)
 
