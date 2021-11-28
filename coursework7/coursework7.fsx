@@ -96,7 +96,7 @@ open FileSystem
 
 let pathWf (path: FileSystem.Path): bool =  not (path |> List.isEmpty) && not (path |> List.contains(""))
 
-let rec fsTreeWf (fs: FileSystem.FsTree) : bool =
+let rec fsTreeWf (fs: FileSystem.FsTree): bool =
    if fs.name = ""
    then false
    else match fs.children with
