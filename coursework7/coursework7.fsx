@@ -161,9 +161,10 @@ let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> 
 
 
 let wfPaths : Gen<Path> =
-   Arb.generate<Path> |> Gen.map (
-      fun path -> path |> List.filter (fun item -> (item <> null && item <> ""))) 
-      |> Gen.filter (fun el -> el.Length > 0)
+   Arb.generate<Path> |> Gen.filter(pathWf)
+      // |> Gen.map (
+      // fun path -> path |> List.filter (fun item -> (item <> null && item <> ""))) 
+      // |> Gen.filter (fun el -> el.Length > 0)
 
 
 let wfTrees : Gen<FsTree> =
