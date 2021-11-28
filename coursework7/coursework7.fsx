@@ -47,28 +47,28 @@ open FsCheck
 
 open FileSystem
 
-let fsObject = 
-   { name = "Taltech"
-     children = [
-        { name = "FSharp"
-          children = [
-             { name = "FSharp"
-               children = [] };
-             { name = "FSharp2"
-               children = [] };
-             { name = "FSharp"
-               children = [] }
-          ] }] }
+// let fsObject = 
+//    { name = "Taltech"
+//      children = [
+//         { name = "FSharp"
+//           children = [
+//              { name = "FSharp"
+//                children = [] };
+//              { name = "FSharp2"
+//                children = [] };
+//              { name = "FSharp"
+//                children = [] }
+//           ] }] }
 
-let fsEmptyOject: FileSystem.FsTree = 
-   { name = ""
-     children = []}
+// let fsEmptyOject: FileSystem.FsTree = 
+//    { name = ""
+//      children = []}
    
 // let isEmptyTest = FileSystem.isEmpty fsObject
 // printfn "%b" isEmptyTest
 
-let pathList = FileSystem.show fsObject
-printfn "%A" pathList
+// let pathList = FileSystem.show fsObject
+// printfn "%A" pathList
 
 (*
    Question 1
@@ -101,14 +101,14 @@ let rec fsTreeWf (fs: FileSystem.FsTree) : bool =
    then false
    else match fs.children with
          | [] -> true
-         | children -> if (children |> List.map (fun child -> child.name) |> List.distinct).Length <> children.Length
-                       then false
-                       else let filteredItems = children |> List.filter(fun el -> fsTreeWf el)
-                            filteredItems.Length = children.Length
+         | children -> 
+            match (children |> List.map (fun child -> child.name) |> List.distinct).Length = children.Length with 
+            | true -> true
+            | _ -> (children |> List.filter(fun tree -> fsTreeWf tree)).Length = children.Length
 
-let isObjectGood = fsTreeWf fsObject
+// let isObjectGood = fsTreeWf fsObject
 
-printfn "%b" isObjectGood
+// printfn "%b" isObjectGood
 
 (*
    Question 2
@@ -129,8 +129,6 @@ printfn "%b" isObjectGood
 *)
 
 let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> lazy fsTreeWf (create p fs)
-
-
 
 
 (*
@@ -161,7 +159,22 @@ let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> 
 *)
 
 
-// let wfTrees: Gen<FsTree> = null
+let wfPaths : Gen<Path> =
+   Arb.generate<Path> |> Gen.map (
+      fun el -> el |> List.filter (fun s -> (s <> null && s <> ""))) 
+      |> Gen.filter (fun el -> el.Length > 0)
+
+
+let wfTrees : Gen<FsTree> =
+   let rec wfTrees' s' : Gen<FsTree> =
+      gen {
+         let! name_val = Arb.generate<string> |> Gen.filter (fun el -> (el <> null && el <> ""))
+         match s' with
+         | 0 -> return {name = name_val ; children = []}
+         | n when n > 0 -> let! x = wfTrees' (n/2) |> Gen.listOf |> Gen.filter (fun el -> (el |> List.filter (fun el2 -> fsTreeWf el2) |> List.length > 0))
+                           return {name = name_val ; children = x}
+      }
+   Gen.sized wfTrees'
 
 
 
@@ -187,9 +200,6 @@ let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> 
 let deleteIsWellFormed (p: Path) (fs: FsTree): bool = fsTreeWf (delete p fs)
 
 
-
-
-
 (*
    Question 5
 
@@ -209,9 +219,9 @@ let deleteIsWellFormed (p: Path) (fs: FsTree): bool = fsTreeWf (delete p fs)
    generators (meaning that p and fs are well-formed).
 *)
 
-let createCreates (p: Path) (fs: FsTree): bool = show (create p fs) |> List.filter(fun path -> path = p) |> List.length = 1
-
-
+let createCreates (p: Path) (fs: FsTree): bool = 
+   show (create p fs) 
+   |> List.filter(fun path -> path = p) |> List.length = 1
 
 
 (*
@@ -233,8 +243,7 @@ let createCreates (p: Path) (fs: FsTree): bool = show (create p fs) |> List.filt
    generators (meaning that p and fs are well-formed).
 *)
 
-let deleteDeletes (p: Path) (fs: FsTree): bool = show (delete p fs) |> List.contains(p) = false
-
+let deleteDeletes (p: Path) (fs: FsTree): bool = show (delete p fs) |> List.contains p = false
 
 
 (*
@@ -287,7 +296,8 @@ let rec isNotPrefix (p1:Path) (p2:Path) : bool =
    match p1, p2 with
    | [], [] -> false
    | x::xs, y::ys -> if x = y then isNotPrefix xs ys else true
-   | [], _::_ -> false
    | _::_, [] -> true
+   | [], _::_ -> false
+   
 
 let createAndDelete (fs: FsTree) (p1: Path) (p2: Path): Property = isNotPrefix p1 p2 ==> lazy List.contains (show (delete p1 (create p2 (create p1 fs))))
