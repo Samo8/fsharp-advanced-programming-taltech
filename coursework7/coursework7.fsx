@@ -101,10 +101,10 @@ let rec fsTreeWf (fs: FileSystem.FsTree) : bool =
    then false
    else match fs.children with
          | [] -> true
-         | children -> 
-            match (children |> List.map (fun child -> child.name) |> List.distinct).Length = children.Length with 
-            | false -> true
-            | _ -> (children |> List.filter(fun tree -> fsTreeWf tree)).Length = children.Length
+         | children -> if (children |> List.map (fun child -> child.name) |> List.distinct).Length <> children.Length
+                       then false
+                       else let filteredItems = children |> List.filter(fun el -> fsTreeWf el)
+                            filteredItems.Length = children.Length
 
 // let isObjectGood = fsTreeWf fsObject
 
