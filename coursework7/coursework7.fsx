@@ -162,7 +162,7 @@ let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> 
 
 let wfPaths : Gen<Path> =
    Arb.generate<Path> |> Gen.map (
-      fun el -> el |> List.filter (fun s -> (s <> null && s <> ""))) 
+      fun path -> path |> List.filter (fun item -> (item <> null && item <> ""))) 
       |> Gen.filter (fun el -> el.Length > 0)
 
 
@@ -301,4 +301,4 @@ let rec isNotPrefix (p1:Path) (p2:Path) : bool =
    | [], _::_ -> false
    
 
-let createAndDelete (fs: FsTree) (p1: Path) (p2: Path): Property = isNotPrefix p1 p2 ==> lazy List.contains (show (delete p1 (create p2 (create p1 fs))))
+let createAndDelete (fs: FsTree) (p1: Path) (p2: Path): Property = isNotPrefix p1 p2 ==> lazy List.contains p2 (show (delete p1 (create p2 (create p1 fs))))
