@@ -160,23 +160,21 @@ let createIsWf (p: Path) (fs: FsTree): Property = (pathWf p && fsTreeWf fs) ==> 
 *)
 
 
-let wfPaths : Gen<Path> =
-   Arb.generate<Path> |> Gen.filter(pathWf)
-      // |> Gen.map (
-      // fun path -> path |> List.filter (fun item -> (item <> null && item <> ""))) 
-      // |> Gen.filter (fun el -> el.Length > 0)
+let wfPaths : Gen<Path> = Arb.generate<Path> |> Gen.filter pathWf 
 
 
 let wfTrees : Gen<FsTree> =
-   let rec wfTrees' s' : Gen<FsTree> =
+   let rec wfTreesInner number : Gen<FsTree> =
       gen {
-         let! name_val = Arb.generate<string> |> Gen.filter (fun el -> (el <> null && el <> ""))
-         match s' with
-         | 0 -> return {name = name_val ; children = []}
-         | n when n > 0 -> let! x = wfTrees' (n/2) |> Gen.listOf |> Gen.filter (fun el -> (el |> List.filter (fun el2 -> fsTreeWf el2) |> List.length > 0))
-                           return {name = name_val ; children = x}
+         let! nameValue = Arb.generate<string> |> Gen.filter (fun el -> (el <> null && el <> ""))
+         match number with
+         | 0 -> return {name = nameValue ; children = []}
+         | n when n > 0 -> 
+            let! x = wfTreesInner (n/2) |> Gen.listOf
+                     |> Gen.filter (fun el -> (el |> List.filter (fun el2 -> fsTreeWf el2) |> List.length > 0))
+            return {name = nameValue ; children = x}
       }
-   Gen.sized wfTrees'
+   Gen.sized wfTreesInner
 
 
 
