@@ -103,7 +103,7 @@ let rec fsTreeWf (fs: FileSystem.FsTree) : bool =
          | [] -> true
          | children -> 
             match (children |> List.map (fun child -> child.name) |> List.distinct).Length = children.Length with 
-            | true -> true
+            | false -> true
             | _ -> (children |> List.filter(fun tree -> fsTreeWf tree)).Length = children.Length
 
 // let isObjectGood = fsTreeWf fsObject
