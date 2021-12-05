@@ -80,7 +80,10 @@
 
 // let next (list: int list) = 1::(((List.rev (0::list) |> List.windowed 2)) |> List.collect(fun item -> [List.sum item]))
 
-let next (list: int list) = 1::(list |> List.windowed 2 |> List.fold(fun acc item -> List.sum item::acc) [1])
+let next (list: int list) =
+  match list.IsEmpty with
+  | true -> [1]
+  | _ -> 1::(list |> List.windowed 2 |> List.fold(fun acc item -> List.sum item::acc) [1])
 
 
 // let resultNext = next [1;3;3;1]
@@ -89,6 +92,7 @@ let next (list: int list) = 1::(list |> List.windowed 2 |> List.fold(fun acc ite
 // printf "%A" resultNext
 
 let triangle: int list seq = Seq.unfold(fun state -> Some(state, next state)) (next [1])
+
 
 // printfn "%A" triangle
 
@@ -137,9 +141,78 @@ let evens (n: int): int list =
 
 *)
 
+let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
+  // let ss = seq {
+  //   xs
+  //   // for i in 0..xs.Length-1 do
+  //   //   f xs
+  // }
+  // let ss = xs |> List.toSeq
+
+  // let rec loop value = seq {
+  //   // if i < xs.Length then
+  //   //   yield value
+  //   yield! loop 
+  // }
+  // loop xs
+  // seq { xs.Head }
+  // let ss = seq {
+  //   yield! xs
+  //   yield ((xs |> List.toSeq) |> Seq.windowed 3)
+  // }
+  // let z = Seq.windowed 3 ss
+  // seq {xs.Head}
+  let rec innerGenerate (list: 'a list): 'a seq = 
+    let next = f list
+    seq {
+      next
+      yield! (innerGenerate (list.Tail @ [next]))
+    }
+  seq {
+    yield! xs
+    yield! innerGenerate xs
+  }
 
 
+// let genResult = generate [1; 2] List.sum
+// printfn "%A" (genResult |> Seq.item 6) 
 
+
+// let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
+//   let xsLength = xs.Length
+//   let n = xsLength * 2
+//   let newSeq =  xs |> List.toSeq |> Seq.cache
+//   seq { for i in 0..n-1 do 
+//           match i < xsLength with 
+//           | true -> xs.Item i 
+//           | _ -> 
+//             printfn "%d" i
+//             printfn "%A" (newSeq |> Seq.take (i - xsLength))
+//             f ( newSeq |> Seq.take (i - xsLength) |> Seq.toList)
+//   }
+
+// let genResult = generate [1;2;3] (fun list -> list.Head)
+
+// printfn "%A" (genResult |> Seq.toList)
+
+// let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
+
+// let generateSequenceRecursive (xs: 'a list) (f: 'a list -> 'a) = 
+//   let n = xs.Length
+//   // let transformValue x = x * 0.9 + 2.0
+//   let rec loop value i = seq {
+//     if i < n then
+//       yield value
+//     yield! loop (f [value]) (i + 1) }
+//   loop xs 0
+
+let generateSequenceRecursive (startingValue: float) (n: int): float seq = 
+  let transformValue x = x * 0.9 + 2.0
+  let rec loop value i = seq {
+    if i < n then
+      yield value
+      yield! loop (transformValue value) (i + 1) }
+  loop startingValue 0
 
 
 (*
