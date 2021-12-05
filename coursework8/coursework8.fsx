@@ -91,7 +91,7 @@ let next (list: int list) =
 
 // printf "%A" resultNext
 
-let triangle: int list seq = Seq.unfold(fun state -> Some(state, next state)) (next [1])
+let triangle: int list seq = Seq.unfold(fun state -> Some(state, next state)) (next [])
 
 
 // printfn "%A" triangle
@@ -141,8 +141,7 @@ let evens (n: int): int list =
 
 *)
 
-let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
-  // let ss = seq {
+// let ss = seq {
   //   xs
   //   // for i in 0..xs.Length-1 do
   //   //   f xs
@@ -162,8 +161,11 @@ let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq =
   // }
   // let z = Seq.windowed 3 ss
   // seq {xs.Head}
+
+let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
   let rec innerGenerate (list: 'a list): 'a seq = 
     let next = f list
+    
     seq {
       next
       yield! (innerGenerate (list.Tail @ [next]))
@@ -174,8 +176,8 @@ let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq =
   }
 
 
-// let genResult = generate [1; 2] List.sum
-// printfn "%A" (genResult |> Seq.item 6) 
+let genResult = generate [1; 2] List.sum
+printfn "%A" (genResult |> Seq.item 4) 
 
 
 // let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
