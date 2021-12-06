@@ -80,10 +80,10 @@
 
 // let next (list: int list) = 1::(((List.rev (0::list) |> List.windowed 2)) |> List.collect(fun item -> [List.sum item]))
 
-let next (list: int list) =
-  match list.IsEmpty with
+let next (arr:int list) : int list =
+  match arr |> List.isEmpty with
   | true -> [1]
-  | _ -> 1::(list |> List.windowed 2 |> List.fold(fun acc item -> List.sum item::acc) [1])
+  | _ -> (arr |> List.windowed 2 |> List.fold (fun state item -> (List.sum item)::state) [1] |> List.rev) @ [1]
 
 
 // let resultNext = next [1;3;3;1]
@@ -176,8 +176,8 @@ let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq =
   }
 
 
-let genResult = generate [1; 2] List.sum
-printfn "%A" (genResult |> Seq.item 4) 
+// let genResult = generate [1; 2] List.sum
+// printfn "%A" (genResult |> Seq.item 4) 
 
 
 // let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
@@ -198,24 +198,6 @@ printfn "%A" (genResult |> Seq.item 4)
 // printfn "%A" (genResult |> Seq.toList)
 
 // let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq = 
-
-// let generateSequenceRecursive (xs: 'a list) (f: 'a list -> 'a) = 
-//   let n = xs.Length
-//   // let transformValue x = x * 0.9 + 2.0
-//   let rec loop value i = seq {
-//     if i < n then
-//       yield value
-//     yield! loop (f [value]) (i + 1) }
-//   loop xs 0
-
-let generateSequenceRecursive (startingValue: float) (n: int): float seq = 
-  let transformValue x = x * 0.9 + 2.0
-  let rec loop value i = seq {
-    if i < n then
-      yield value
-      yield! loop (transformValue value) (i + 1) }
-  loop startingValue 0
-
 
 (*
   Task 3: Longest common subsequence
