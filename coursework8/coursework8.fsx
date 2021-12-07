@@ -262,21 +262,25 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
   let xsLength = xs.Length + 1
   let ysLength = ys.Length + 1
   let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
-  table.[0,*] <- [|for _ in 1..xsLength do (lazy 0)|]
-  table.[*,0] <- [|for _ in 1..xsLength do (lazy 0)|]
+  table.[*, 0] <- [|for _ in 1..xsLength do (lazy 0)|]
+  table.[0, *] <- [|for _ in 1..ysLength do (lazy 0)|]
   // table.[0,*] <- Array.create xsLength (lazy 0)
   // table.[*,0] <- Array.create xsLength (lazy 0)
-  
-  let _ = xs |> Array.mapi(
+  xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
       match compare item item2 with
       | 0 -> 
-        m (i+1, j+1)
-        table.[i+1, j+1] <- lazy ( (table.[i, j].Value + 1))
+        table.[i+1, j+1] <- lazy (
+          m (i+1, j+1);
+         (table.[i, j].Value + 1)
+        )
       | _ -> 
-        m (i+1, j+1)
-        table.[i+1, j+1] <- lazy ( (max table.[i+1, j].Value table.[i, j+1].Value))
+        table.[i+1, j+1] <- lazy (
+          m (i+1, j+1);
+          (max table.[i+1, j].Value table.[i, j+1].Value)
+        )
       ))
+  |> ignore
   table
   
 
@@ -285,7 +289,9 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
 // let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
 // lcsResult.[4,4].Value
 
-// let lcsResult = lcs mFunc [|2|] [|2|]
+// let lcsResult = lcs mFunc [|'b'; 'd'|] [|'a';'b';'c';'d'|]
+
+// lcsResult.[1,1].Value
 
 // table.[1,*] <- (lazy 1)
 
