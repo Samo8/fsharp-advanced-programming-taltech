@@ -262,26 +262,27 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
   let xsLength = xs.Length + 1
   let ysLength = ys.Length + 1
   let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
-  table.[0,*] <- [|for i in 1..xsLength do (lazy 0)|]
-  table.[*,0] <- [|for i in 1..xsLength do (lazy 0)|]
+  // table.[0,*] <- [|for i in 1..xsLength do (lazy 0)|]
+  table.[0,*] <- Array.create xsLength (lazy 0)
+  table.[*,0] <- Array.create xsLength (lazy 0)
+  // table.[*,0] <- [|for i in 1..xsLength do (lazy 0)|]
 
 
   let _ = xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
       match compare item item2 with
       | 0 -> 
-        
-        table.[i+1,j+1] <- lazy (m (i+1,j+1) ; (table.[i, j].Value + 1))
+        table.[i+1, j+1] <- lazy (m (i+1, j+1) ; (table.[i, j].Value + 1))
       | _ -> 
-        // m (i+1,j+1)
-        table.[i+1,j+1] <- lazy (m (i+1,j+1) ; (max table.[i+1, j].Value table.[i, j+1].Value))
+        table.[i+1, j+1] <- lazy (m (i+1, j+1) ; (max table.[i+1, j].Value table.[i, j+1].Value))
       ))
   table
 
 
 // let mFunc (a, b) = printfn "Nazdar %A" (a,b) 
 
-// let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
+// // let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
+// let lcsResult = lcs mFunc [|2|] [|2|]
 
 // table.[1,*] <- (lazy 1)
 
