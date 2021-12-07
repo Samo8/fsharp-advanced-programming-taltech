@@ -269,13 +269,17 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
   let _ = xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
       match compare item item2 with
-      | 0 -> table.[i+1,j+1] <- lazy (table.[i, j].Value + 1)
-      | _ -> table.[i+1,j+1] <- lazy (max table.[i+1, j].Value table.[i, j+1].Value)
+      | 0 -> 
+        
+        table.[i+1,j+1] <- lazy (m (i+1,j+1) ; (table.[i, j].Value + 1))
+      | _ -> 
+        // m (i+1,j+1)
+        table.[i+1,j+1] <- lazy (m (i+1,j+1) ; (max table.[i+1, j].Value table.[i, j+1].Value))
       ))
   table
 
 
-// let mFunc (a, b) = printfn "Nazdar" 
+// let mFunc (a, b) = printfn "Nazdar %A" (a,b) 
 
 // let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
 
