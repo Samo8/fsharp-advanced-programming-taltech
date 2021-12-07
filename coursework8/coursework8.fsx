@@ -258,11 +258,36 @@ let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq =
 
 *)
 
+let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
+  let xsLength = xs.Length + 1
+  let ysLength = ys.Length + 1
+  let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
+  table.[0,*] <- [|for i in 1..xsLength do (lazy 0)|]
+  table.[*,0] <- [|for i in 1..xsLength do (lazy 0)|]
 
 
+  let _ = xs |> Array.mapi(
+      fun i item -> ys |> Array.mapi(fun j item2 ->
+      match compare item item2 with
+      | 0 -> table.[i+1,j+1] <- lazy (table.[i, j].Value + 1)
+      | _ -> table.[i+1,j+1] <- lazy (max table.[i+1, j].Value table.[i, j+1].Value)
+      ))
+  table
 
 
+// let mFunc (a, b) = printfn "Nazdar" 
 
+// let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
+
+// table.[1,*] <- (lazy 1)
+
+
+// table.[5,0] <- lazy (max table.[1,0].Value table.[2,0].Value)
+
+
+// let table2 = table |> Array2D.set
+
+// let zzz = Array.empty<int>
 
 (*
   Task 4:
