@@ -262,12 +262,11 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
   let xsLength = xs.Length + 1
   let ysLength = ys.Length + 1
   let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
-  // table.[0,*] <- [|for i in 1..xsLength do (lazy 0)|]
-  table.[0,*] <- Array.create xsLength (lazy 0)
-  table.[*,0] <- Array.create xsLength (lazy 0)
-  // table.[*,0] <- [|for i in 1..xsLength do (lazy 0)|]
-
-
+  table.[0,*] <- [|for _ in 1..xsLength do (lazy 0)|]
+  table.[*,0] <- [|for _ in 1..xsLength do (lazy 0)|]
+  // table.[0,*] <- Array.create xsLength (lazy 0)
+  // table.[*,0] <- Array.create xsLength (lazy 0)
+  
   let _ = xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
       match compare item item2 with
