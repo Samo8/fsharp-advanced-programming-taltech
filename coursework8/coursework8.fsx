@@ -275,12 +275,13 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
       | _ -> 
         table.[i+1, j+1] <- lazy (m (i+1, j+1) ; (max table.[i+1, j].Value table.[i, j+1].Value))
       ))
-  table
+  // table
+  table.[1.., 1..]
+  
 
 
 // let mFunc (a, b) = printfn "Nazdar %A" (a,b) 
-
-// // let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
+// let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
 // let lcsResult = lcs mFunc [|2|] [|2|]
 
 // table.[1,*] <- (lazy 1)
