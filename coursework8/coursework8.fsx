@@ -258,14 +258,13 @@ let generate (xs: 'a list) (f: 'a list -> 'a): 'a seq =
 
 *)
 
-let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
+let lcs (m: (int * int) -> unit) (xs: 'a []) (ys: 'a []): Lazy<int> [,] =
   let xsLength = xs.Length + 1
   let ysLength = ys.Length + 1
   let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
-  table.[*, 0] <- [|for _ in 1..xsLength do (lazy 0)|]
-  table.[0, *] <- [|for _ in 1..ysLength do (lazy 0)|]
-  // table.[0,*] <- Array.create xsLength (lazy 0)
-  // table.[*,0] <- Array.create xsLength (lazy 0)
+  table.[*, 0] <- [|for i in 1..xsLength do (lazy (m (i, 0) ; 0))|]
+  table.[0, *] <- [|for j in 1..ysLength do (lazy (m (0, j) ; 0))|]
+  
   xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
       match compare item item2 with
@@ -287,6 +286,20 @@ let lcs (m: (int * int) -> unit) (xs:'a []) (ys:'a []) : Lazy<int> [,] =
 
 // let mFunc (a, b) = printfn "Nazdar %A" (a,b) 
 // let lcsResult = lcs mFunc [|1;2;3;4|] [|5;1;6;4|]
+// let lcsResult = lcs mFunc [|1;2|] [|1;4;2|]
+// lcsResult.[0,0].Value
+// lcsResult.[0,1].Value
+// lcsResult.[0,2].Value
+// lcsResult.[0,3].Value
+// lcsResult.[1,0].Value
+// lcsResult.[1,1].Value
+// lcsResult.[1,2].Value
+// lcsResult.[1,3].Value
+// lcsResult.[2,0].Value
+// lcsResult.[2,1].Value
+// lcsResult.[2,2].Value
+// lcsResult.[2,3].Value
+
 // lcsResult.[4,4].Value
 
 // let lcsResult = lcs mFunc [|'b'; 'd'|] [|'a';'b';'c';'d'|]
