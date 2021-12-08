@@ -262,8 +262,8 @@ let lcs (m: (int * int) -> unit) (xs: 'a []) (ys: 'a []): Lazy<int> [,] =
   let xsLength = xs.Length + 1
   let ysLength = ys.Length + 1
   let table = Array2D.zeroCreate<Lazy<int>> xsLength ysLength
-  table.[*, 0] <- [|for i in 1..xsLength do (lazy (m (i, 0) ; 0))|]
-  table.[0, *] <- [|for j in 1..ysLength do (lazy (m (0, j) ; 0))|]
+  table.[*, 0] <- [|for i in 1..xsLength do (lazy (m (i-1, 0) ; 0))|]
+  table.[0, *] <- [|for j in 1..ysLength do (lazy (m (0, j-1) ; 0))|]
   
   xs |> Array.mapi(
       fun i item -> ys |> Array.mapi(fun j item2 ->
