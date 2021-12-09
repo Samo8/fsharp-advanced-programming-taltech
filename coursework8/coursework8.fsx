@@ -371,7 +371,43 @@ type Expr =
   | Let    of string * Expr * Expr // let expression, the string is the identifier.
 
 
-let eval (e:Expr) : (Map<string, int> -> int) = failwith "not yet implemented"
+let rec eval (e:Expr) : (Map<string, int> -> int) =
+  reader {
+    match e with
+    | Const x -> return x
+    | Ident s ->
+        let! a = ask
+        return a.Item s
+    | Neg x ->
+        let! r = eval x
+        return -r
+    | Sum (x, y) ->
+        let! x = eval x
+        let! y = eval y
+        return x + y
+    | Diff (x, y) ->
+        let! x = eval x
+        let! y = eval y
+        return x - y
+    | Prod (x, y) ->
+        let! x = eval x
+        let! y = eval y
+        return x * y
+    | Div (x, y) ->
+        let! x = eval x
+        let! y = eval y
+        return x / y
+    | DivRem (x, y) ->
+        let! x = eval x
+        let! y = eval y
+        return x % y
+    | Let (s, x, y) -> 
+        let! env = ask
+        let! x = eval x
+        let subenv = env.Add(s, x)
+        let y = eval y
+        return (runReader y subenv)
+  }
 
 // //Example:
 // //keeping in mind the expression: let a = 5 in (a + 1) * 6
