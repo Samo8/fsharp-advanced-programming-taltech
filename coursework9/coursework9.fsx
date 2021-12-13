@@ -111,8 +111,8 @@ let mandelbrot n c =
     let rec mandelbrotInner currItem n2 = 
       let newCurr = add (multiply currItem currItem) c
       match absolute newCurr <= 2.0 with
-        | true -> if n2 = n then true else mandelbrotInner newCurr (n2 + 1)
-        | false -> false
+        | true -> if n2 = (n+1) then true else mandelbrotInner newCurr (n2 + 1)
+        | _ -> false
     mandelbrotInner (0.0, 0.0) 0
 
 // let x = mandelbrot 2 (-1.0, 0.0)
