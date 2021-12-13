@@ -121,8 +121,6 @@ for i in 0..20 do if not (mandelbrot i (-1.0, 0.0)) then failwith "chyba"
 
 
 
-
-
 // seq { for i in 0..n-1 do  }
 
 
