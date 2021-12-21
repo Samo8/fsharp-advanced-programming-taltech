@@ -324,13 +324,20 @@ let accumulate f t obs =
 
 *)
 
-let chunks n obs =
-   obs |> Observable.scan (fun (ready, len, collecting) event ->
-      if len = n then (collecting, 1, [event])
-      else ([], len+1, event::collecting)
-   ) ([], 0, [])
-   |> Observable.map (fun (items, _, _) -> List.rev items)
-   |> Observable.filter (List.isEmpty >> not)
+// let chunks n obs =
+//    obs |> Observable.scan (fun (ready, len, collecting) event ->
+//       if len = n then (collecting, 1, [event])
+//       else ([], len+1, event::collecting)
+//    ) ([], 0, [])
+//    |> Observable.map (fun (items, _, _) -> List.rev items)
+//    |> Observable.filter (List.isEmpty >> not)
+
+let chunks (n:int) obs =
+    let emitEveryN xs x =
+        match List.length xs with
+        | m when m=n-1 -> ([],Some(xs@[x]))
+        | _ -> (xs@[x],None)
+    accumulate emitEveryN [] obs
 
 
 (*
