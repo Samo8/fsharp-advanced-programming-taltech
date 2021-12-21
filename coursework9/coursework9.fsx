@@ -95,34 +95,27 @@ type Complex = double * double
 
 let add (c1: Complex) (c2: Complex): Complex = (fst c1 + fst c2, snd c1 + snd c2)
 
-let multiply (c1:Complex) (c2:Complex): Complex =
+let multiply (c1: Complex) (c2: Complex): Complex =
    let r1 = fst c1
    let r2 = fst c2
    let i1 = snd c1
    let i2 = snd c2
    r1 * r2 - i1 * i2, r1 * i2 + r2 * i1
 
-let absolute (c:Complex) : double =
+let absolute (c: Complex): double =
    let x_2 = fst(c) * fst(c)
    let y_2 = snd(c) * snd(c)
    sqrt (x_2 + y_2)
 
-let mandelbrot n c = 
-    let rec mandelbrotInner currItem n2 = 
-      let newCurr = add (multiply currItem currItem) c
-      match absolute newCurr <= 2.0 with
-        | true -> if n2 = (n+1) then true else mandelbrotInner newCurr (n2 + 1)
-        | _ -> false
-    mandelbrotInner (0.0, 0.0) 0
-
-// let x = mandelbrot 2 (-1.0, 0.0)
-
-for i in 0..20 do if not (mandelbrot i (-1.0, 0.0)) then failwith "chyba"
+let mandelbrot n c =
+   let rec mandelbrotInner i z =
+      if absolute z > 2.0 then false
+      else if i = 0 then true
+      else mandelbrotInner (i - 1) (add c (multiply z z))
+   mandelbrotInner n (0.0, 0.0) 
 
 
-
-// seq { for i in 0..n-1 do  }
-
+// for i in 0..20 do if not (mandelbrot i (-1.0, 0.0)) then failwith "broken"
 
 
 (*
@@ -160,7 +153,15 @@ for i in 0..20 do if not (mandelbrot i (-1.0, 0.0)) then failwith "chyba"
    Try to divide fairly.
 *)
 
-let divide m n = failwith "not implemented"
+let divide m n =
+   let minimum = min m n
+   let s = n / minimum
+   let r = n % minimum
+   seq {
+      for i in 0..r - 1 do yield i * (s + 1), (i + 1) * (s + 1) - 1
+      for i in r..minimum - 1 do yield r + i * s, r + (i + 1) * s - 1
+   }
+
 
 
 
@@ -200,7 +201,21 @@ let divide m n = failwith "not implemented"
 
 *)
 
-let mandelbrotAsync m n start finish cs = failwith "not implemented"
+let mandelbrotAsync m n start finish cs =
+   async {
+      let! results =
+         divide m (Array.length cs)
+         |> Seq.map (fun (s, e) ->
+               Async.FromContinuations (fun (cont, _, _) ->
+                  start s
+                  cs.[s..e] |> Array.map (mandelbrot n) |> cont
+                  finish e
+               )
+            )
+         |> Async.Parallel
+      return Array.concat results
+   }
+
 
 
 
@@ -283,9 +298,9 @@ let display n bs = failwith "not implemented"
 
 *)
 
-let accumulate f t obs = failwith "not implemented"
-
-
+let accumulate f t obs =
+   obs|> Observable.scan (fun (i, _) x -> f i x) (t, None)
+      |> Observable.choose snd
 
 
 (*
@@ -309,10 +324,13 @@ let accumulate f t obs = failwith "not implemented"
 
 *)
 
-let chunks n obs = failwith "not implemented"
-
-
-
+let chunks n obs =
+   obs |> Observable.scan (fun (ready, len, collecting) event ->
+      if len = n then (collecting, 1, [event])
+      else ([], len+1, event::collecting)
+   ) ([], 0, [])
+   |> Observable.map (fun (items, _, _) -> List.rev items)
+   |> Observable.filter (List.isEmpty >> not)
 
 
 (*
@@ -336,8 +354,13 @@ let chunks n obs = failwith "not implemented"
 
 *)
 
-let sliding n obs = failwith "not implemented"
-
+let sliding n obs =
+   obs |> Observable.scan (fun items event ->
+      match items with
+      | _ :: rest when List.length rest = n-1 -> rest @ [event]
+      | _ -> items @ [event]
+   ) []
+   |> Observable.filter (fun x -> List.length x = n)
 
 
 
@@ -363,8 +386,22 @@ let sliding n obs = failwith "not implemented"
 
 *)
 
-let limit clock obs = failwith "not implemented"
+type State<'a> =
+   | Emit of 'a
+   | Discard
+   | Restart
 
+let limit clock obs =
+   let ticks = clock |> Observable.map (fun _ -> Restart)
+   let data = obs |> Observable.map (fun x -> (Emit(x)))
+   Observable.merge ticks data
+      |> Observable.scan (fun p n ->
+         match p, n with
+         | Restart, Emit(x) -> Emit(x)
+         | _, Restart -> Restart
+         | _ -> Discard
+         ) Restart
+      |> Observable.choose (function Emit(x) -> Some(x) | _ -> None)
 
 
 
@@ -394,5 +431,14 @@ let limit clock obs = failwith "not implemented"
 
 *)
 
-let alarm n threshold clock obs = failwith "not implemented"
-
+let alarm n threshold clock obs =
+   obs |> Observable.scan (fun items next ->
+            let tokeep = min (n-1) (List.length items)
+            next :: (items |> List.take tokeep)
+          ) []
+       |> Observable.choose (fun items ->
+            if (List.sum items) > (List.length items) * threshold
+            then Some()
+            else None
+          )
+       |> limit clock
