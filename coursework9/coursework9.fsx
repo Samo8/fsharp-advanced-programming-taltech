@@ -274,14 +274,15 @@ let boolToChar value =
 
 
 let display n (bs: bool array): string = 
+   if bs.Length = 0 then "" 
+   else 
    let subResult = bs |> Array.fold(fun (currS, currI) item ->
       match (currI) % n = 0 with
       | true -> (currS + (boolToChar item) + "\n", currI + 1)         
-      | _    -> (currS + (boolToChar item), currI + 1)) ("", 1)
-   let result = subResult |> fst
-   let rr = result |> String.filter(fun x -> x = '.' || x = '*')
-   let s = result + String.init ((if n % 2 = 0 then rr.Length else rr.Length - 1) % n) (fun _ -> ".")
-   if result.EndsWith("\n") then s.Substring(0, s.Length - 1) else  s
+      | _    -> (currS + (boolToChar item), currI + 1)) ("", 1) |> fst
+   let filteredItems = subResult |> String.filter(fun x -> x = '.' || x = '*')
+   let result = subResult + String.init ((if n % 2 = 0 then filteredItems.Length else filteredItems.Length - 1) % n) (fun _ -> ".")
+   if subResult.EndsWith("\n") then result.Substring(0, result.Length - 1) else  result
    
    
 
