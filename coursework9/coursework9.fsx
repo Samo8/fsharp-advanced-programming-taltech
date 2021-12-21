@@ -280,12 +280,13 @@ let display n (bs: bool array): string =
       | _    -> (currS + (boolToChar item), currI + 1)) ("", 1)
    let result = subResult |> fst
    let rr = result |> String.filter(fun x -> x = '.' || x = '*')
-   result + String.init ((if n % 2 = 0 then rr.Length else rr.Length - 1) % n) (fun _ -> ".")
+   let s = result + String.init ((if n % 2 = 0 then rr.Length else rr.Length - 1) % n) (fun _ -> ".")
+   if result.EndsWith("\n") then s.Substring(0, s.Length - 1) else  s
    
    
 
-// let n = 5
-// let bs = [| true; false; false|]
+// let n = 1
+// let bs = [| true; false|]
 // let bs = [| true; false; false; false; true; true; false |]
 
 // display n bs
