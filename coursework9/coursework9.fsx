@@ -163,9 +163,6 @@ let divide m n =
    }
 
 
-
-
-
 (*
    Question 3
 
@@ -215,10 +212,6 @@ let mandelbrotAsync m n start finish cs =
          |> Async.Parallel
       return Array.concat results
    }
-
-
-
-
 
 
 (*
@@ -379,7 +372,7 @@ let chunks n obs =
 let sliding n obs =
    obs |> Observable.scan (fun items event ->
       match items with
-      | _ :: rest when List.length rest = n-1 -> rest @ [event]
+      | _ :: rest when List.length rest = n - 1 -> rest @ [event]
       | _ -> items @ [event]
    ) []
    |> Observable.filter (fun x -> List.length x = n)
@@ -455,7 +448,7 @@ let limit clock obs =
 
 let alarm n threshold clock obs =
    obs |> Observable.scan (fun items next ->
-            let tokeep = min (n-1) (List.length items)
+            let tokeep = min (n - 1) (List.length items)
             next :: (items |> List.take tokeep)
           ) []
        |> Observable.choose (fun items ->
