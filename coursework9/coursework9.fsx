@@ -258,20 +258,7 @@ let boolToChar value =
    | true -> "*"
    | _    -> "."
 
-// let addEndOfLine (n: int) (s: string) = 
-//    printfn "%A" s.Length
-//    match s.Length % n = 0 with
-//    | true -> "\n"
-//    | _ -> ""
-
-// let rec display n (bs: bool array): string = 
-//    let rec displayInner (bs': bool list) (acc: string list): string list  =
-//       match bs' with
-//       | [] -> acc
-//       | x::xs' -> displayInner xs' (acc + (boolToChar x) + (addEndOfLine n acc))
-
-//    displayInner (Array.toList bs) []
-
+let appendDot (n: int) (s: string) = String.init ((if n % 2 = 0 then s.Length else s.Length - 1) % n) (fun _ -> ".")
 
 let display n (bs: bool array): string = 
    if bs.Length = 0 then "" 
@@ -281,7 +268,7 @@ let display n (bs: bool array): string =
       | true -> (currS + (boolToChar item) + "\n", currI + 1)         
       | _    -> (currS + (boolToChar item), currI + 1)) ("", 1) |> fst
    let filteredItems = subResult |> String.filter(fun x -> x = '.' || x = '*')
-   let result = subResult + String.init ((if n % 2 = 0 then filteredItems.Length else filteredItems.Length - 1) % n) (fun _ -> ".")
+   let result = subResult + (appendDot n filteredItems)
    if subResult.EndsWith("\n") then result.Substring(0, result.Length - 1) else  result
    
    
