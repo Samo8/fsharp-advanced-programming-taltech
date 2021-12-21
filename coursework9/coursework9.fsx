@@ -253,8 +253,41 @@ let mandelbrotAsync m n start finish cs =
 
 *)
 
-let display n bs = failwith "not implemented"
+let boolToChar value =
+   match value with
+   | true -> "*"
+   | _    -> "."
 
+// let addEndOfLine (n: int) (s: string) = 
+//    printfn "%A" s.Length
+//    match s.Length % n = 0 with
+//    | true -> "\n"
+//    | _ -> ""
+
+// let rec display n (bs: bool array): string = 
+//    let rec displayInner (bs': bool list) (acc: string list): string list  =
+//       match bs' with
+//       | [] -> acc
+//       | x::xs' -> displayInner xs' (acc + (boolToChar x) + (addEndOfLine n acc))
+
+//    displayInner (Array.toList bs) []
+
+
+let display n (bs: bool array): string = 
+   let subResult = bs |> Array.fold(fun (currS, currI) item ->
+      match (currI) % n = 0 with
+      | true -> (currS + (boolToChar item) + "\n", currI + 1)         
+      | _    -> (currS + (boolToChar item), currI + 1)) ("", 1)
+   let result = subResult |> fst
+   let rr = result |> String.filter(fun x -> x = '.' || x = '*')
+   result + String.init (rr.Length % n) (fun _ -> ".")
+   
+   
+
+// let n = 2 
+// let bs = [| true; false; false; false; true; true; false |]
+
+// display n bs
 
 (*
 
@@ -324,19 +357,11 @@ let accumulate f t obs =
 
 *)
 
-// let chunks n obs =
-//    obs |> Observable.scan (fun (ready, len, collecting) event ->
-//       if len = n then (collecting, 1, [event])
-//       else ([], len+1, event::collecting)
-//    ) ([], 0, [])
-//    |> Observable.map (fun (items, _, _) -> List.rev items)
-//    |> Observable.filter (List.isEmpty >> not)
-
-let chunks (n:int) obs =
+let chunks n obs =
     let emitEveryN xs x =
         match List.length xs with
-        | m when m=n-1 -> ([],Some(xs@[x]))
-        | _ -> (xs@[x],None)
+        | m when m = n - 1 -> ([], Some(xs @ [x]))
+        | _ -> (xs @ [x], None)
     accumulate emitEveryN [] obs
 
 
